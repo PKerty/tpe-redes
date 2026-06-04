@@ -1,0 +1,34 @@
+# --- WireGuard secrets: NUNCA commitear claves privadas ni configs renderizadas ---
+vpn/keys/
+*.key
+*_private.key
+*.privkey
+wg-*.conf
+*.conf.rendered
+
+# --- Kubeconfig / credenciales generadas en demo ---
+*.kubeconfig
+kubeconfig
+.kube/
+
+# --- Artefactos de build de la app ---
+**/target/
+**/node_modules/
+**/dist/build/
+**/.gradle/
+**/bin/
+*.class
+
+# --- Local del harness / herramientas ---
+.claude/
+
+# --- Sistema operativo / editores ---
+.DS_Store
+*.swp
+*~
+.idea/
+.vscode/
+
+# --- Capturas de tráfico de la demo ---
+*.pcap
+*.pcapng
