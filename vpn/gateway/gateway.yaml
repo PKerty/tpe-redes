@@ -60,6 +60,7 @@ spec:
         - name: wg-conf
           secret:
             secretName: wg-gateway-conf
+            defaultMode: 0400
         - name: entrypoint
           configMap:
             name: wg-gateway-entrypoint
