@@ -17,11 +17,13 @@ echo "[gateway] levantando interfaces WireGuard"
 wg-quick up wg0    # Site-To-Site
 wg-quick up wg1    # Client-To-Site
 
-echo "[gateway] NAT subredes túnel -> CIDRs del cluster (services/pods)"
-for sub in "$C2S_SUBNET" "$S2S_SUBNET"; do
-  iptables -t nat -A POSTROUTING -s "$sub" -d "$SVC_CIDR" -j MASQUERADE
-  iptables -t nat -A POSTROUTING -s "$sub" -d "$POD_CIDR" -j MASQUERADE
-done
+# MASQUERADE por DESTINO: todo lo que el gateway reenvía hacia los CIDRs del
+# cluster sale con la IP del pod gateway. Así el cluster ve un único origen
+# conocido y sabe rutear la respuesta de vuelta, sin importar el origen real
+# (admin 10.200.x, túnel 10.100.x, o la LAN corporativa 172.30.x del Site-To-Site).
+echo "[gateway] NAT (MASQUERADE) hacia los CIDRs del cluster (services/pods)"
+iptables -t nat -A POSTROUTING -d "$SVC_CIDR" -j MASQUERADE
+iptables -t nat -A POSTROUTING -d "$POD_CIDR" -j MASQUERADE
 for ifc in wg0 wg1; do
   iptables -A FORWARD -i "$ifc" -j ACCEPT
   iptables -A FORWARD -o "$ifc" -j ACCEPT

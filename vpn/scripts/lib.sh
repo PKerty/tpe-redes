@@ -32,10 +32,13 @@ S2S_LISTEN="51820"
 S2S_NODEPORT="31820"
 
 # --- Red corporativa simulada ---
+# Nota: el TPE proponía 172.20.0.0/24, pero en la máquina de desarrollo ese /16
+# ya estaba tomado por otra red docker. Usamos 172.30.0.0/24 (mismo rol).
 CORP_NET="corp-net"          # red docker
-CORP_SUBNET="172.20.0.0/24"
-CORP_GW_IP="172.20.0.1"      # corp-gateway (con WireGuard)
-CORP_PC_IP="172.20.0.50"     # corp-pc (SIN WireGuard)
+CORP_SUBNET="172.30.0.0/24"
+CORP_GW_IP="172.30.0.1"      # corp-gateway (con WireGuard)
+CORP_PC_IP="172.30.0.50"     # corp-pc (SIN WireGuard)
+CORP_BRIDGE_GW="172.30.0.254" # gateway del bridge docker (libera .1 para corp-gateway)
 
 # --- CIDRs del cluster (defaults de Kind) ---
 SVC_CIDR="10.96.0.0/16"
