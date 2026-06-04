@@ -28,6 +28,14 @@ RUN apk add --no-cache \
         bind-tools
 COPY --from=build /usr/local/bin/wireguard-go /usr/bin/wireguard-go
 
+# kubectl para el cliente admin (Client-To-Site: operar el cluster por el túnel).
+ARG KUBECTL_VERSION=v1.31.0
+RUN arch="$(uname -m)"; case "$arch" in \
+        x86_64) k=amd64;; aarch64) k=arm64;; *) k=amd64;; esac; \
+    curl -fsSL -o /usr/bin/kubectl \
+        "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${k}/kubectl" \
+    && chmod +x /usr/bin/kubectl
+
 # wg-quick usa la implementación userspace en vez del módulo de kernel.
 ENV WG_QUICK_USERSPACE_IMPLEMENTATION=wireguard-go
 ENV LOG_LEVEL=info
