@@ -102,3 +102,46 @@ require_keys() {
     exit 1
   fi
 }
+
+# Renderiza wg0.conf (Site-To-Site) y wg1.conf (Client-To-Site) del gateway en
+# el directorio $1, a partir de las claves actuales. Fuente única usada por el
+# deploy y por la rotación de claves.
+render_gateway_confs() {
+  local out="$1"
+  cat > "$out/wg0.conf" <<EOF
+[Interface]
+Address = ${S2S_GW_IP}/30
+ListenPort = ${S2S_LISTEN}
+PrivateKey = $(key_priv gw-s2s)
+
+[Peer]
+PublicKey = $(key_pub corp)
+AllowedIPs = ${S2S_CORP_IP}/32, ${CORP_SUBNET}
+EOF
+  cat > "$out/wg1.conf" <<EOF
+[Interface]
+Address = ${C2S_GW_IP}/24
+ListenPort = ${C2S_LISTEN}
+PrivateKey = $(key_priv gw-c2s)
+
+[Peer]
+PublicKey = $(key_pub admin)
+AllowedIPs = ${C2S_ADMIN_IP}/32
+EOF
+}
+
+# (Re)crea el Secret wg-gateway-conf desde las claves actuales (idempotente).
+update_gateway_secret() {
+  local tmp; tmp="$(mktemp -d)"
+  render_gateway_confs "$tmp"
+  kubectl create secret generic wg-gateway-conf -n "$VPN_NS" \
+    --from-file=wg0.conf="$tmp/wg0.conf" \
+    --from-file=wg1.conf="$tmp/wg1.conf" \
+    --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+  rm -rf "$tmp"
+}
+
+# Pod del gateway (nombre) para exec/live config.
+gateway_pod() {
+  kubectl get pod -n "$VPN_NS" -l app=wg-gateway -o jsonpath='{.items[0].metadata.name}'
+}
