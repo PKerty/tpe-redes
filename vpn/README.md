@@ -15,12 +15,27 @@ Esta carpeta contiene **toda la implementación propia** del TPE (la app
 
 ## Decisiones técnicas
 
-- **WireGuard userspace (`wireguard-go`)**: evita depender de cargar el módulo
-  de kernel (`CONFIG_WIREGUARD=m` no garantizado en runtime). Sólo requiere
-  `/dev/net/tun` + capability `NET_ADMIN`.
+- **WireGuard de kernel** como modo primario: el pod/container sólo necesita la
+  capability `NET_ADMIN` y el módulo `wireguard` cargado en el host. Es más
+  simple y rápido que userspace (no requiere `privileged` ni `/dev/net/tun`).
+- **Fallback userspace (`wireguard-go`)**: la imagen incluye `wireguard-go` por
+  si el host no tiene el módulo de kernel. `wg-quick` cae a userspace
+  automáticamente. El preflight (`ensure_wg_module` en `scripts/lib.sh`) intenta
+  cargar el módulo y, si no puede, deja el fallback activo.
 - **Cifrado**: ChaCha20-Poly1305, autenticación por clave pública (Noise IK).
 - **Todo en una PC**: gateway como pod en Kind; cliente admin y red corporativa
-  como containers Docker en la red `kind`, alcanzando el NodePort del nodo.
+  como containers Docker, alcanzando el **NodePort UDP** del nodo Kind.
+
+## Mapa de red (resumen)
+
+| Túnel | Interfaz gw | Subred túnel | Gateway | Peer | NodePort UDP |
+|-------|-------------|--------------|---------|------|--------------|
+| Client-To-Site | `wg1` | `10.200.0.0/24` | `.1` | admin `.2` | `31821` |
+| Site-To-Site | `wg0` | `10.100.0.0/30` | `.2` | corp `.1` | `31820` |
+
+Red corporativa simulada: `172.20.0.0/24` (corp-gateway `.1`, corp-pc `.50`).
+CIDRs del cluster ruteados por el túnel: services `10.96.0.0/16`, pods
+`10.244.0.0/16`. Valores centralizados en [`scripts/lib.sh`](./scripts/lib.sh).
 
 > **Progreso gradual:** este árbol se construye por etapas. Ver el estado en los
 > commits y en `docs/`.
