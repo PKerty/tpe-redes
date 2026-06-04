@@ -62,10 +62,18 @@ capa, no de acceso remoto.
 
 ```bash
 # 1. Levantar el cluster con la app
-cd the-store-main && ./local.sh create-cluster && cd ..
+cd the-store-main && ./local.sh create-cluster --skip-tests && cd ..
 
-# 2. Desplegar la solución de acceso remoto (ver vpn/README.md)
-vpn/scripts/...    # (en construcción, progreso gradual)
+# 2. Desplegar toda la solución de acceso remoto + verificar (8 PASS esperados)
+vpn/scripts/up.sh
 ```
 
-La guía paso a paso (how-to) está en [`docs/`](./docs/).
+`up.sh` corre, en orden: generación de claves → gateway → cliente admin
+(Client-To-Site) → red corporativa (Site-To-Site) → NetworkPolicies →
+verificación end-to-end.
+
+Demos individuales: `vpn/scripts/verify-encryption.sh` (cifrado en el cable) y
+`vpn/scripts/rotate-keys.sh admin` (rotación en caliente).
+
+**Guía paso a paso completa:** [`docs/how-to.md`](./docs/how-to.md).
+Teardown: `vpn/scripts/99-teardown.sh`.
