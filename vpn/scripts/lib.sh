@@ -62,22 +62,24 @@ ensure_image() {
 # Si no se puede cargar, los componentes usan el fallback userspace
 # (wireguard-go, ya incluido en la imagen).
 ensure_wg_module() {
-  if lsmod 2>/dev/null | grep -q '^wireguard'; then
+  # Usamos /proc/modules (no depende de tener /sbin en el PATH como lsmod).
+  if grep -q '^wireguard ' /proc/modules 2>/dev/null; then
     c_ok "Módulo wireguard ya cargado (modo kernel)."
     return 0
   fi
   c_warn "Módulo wireguard no cargado; intentando cargarlo..."
-  if sudo modprobe wireguard 2>/dev/null && lsmod | grep -q '^wireguard'; then
+  if sudo modprobe wireguard 2>/dev/null && grep -q '^wireguard ' /proc/modules; then
     c_ok "Módulo wireguard cargado."
     return 0
   fi
   # Fallback: forzar autocarga vía container privilegiado efímero.
-  if docker run --rm --privileged "$IMAGE" sh -c 'ip link add wgprobe type wireguard 2>/dev/null && ip link del wgprobe' 2>/dev/null \
-     && lsmod 2>/dev/null | grep -q '^wireguard'; then
+  docker run --rm --privileged "$IMAGE" \
+    sh -c 'ip link add wgprobe type wireguard 2>/dev/null && ip link del wgprobe' >/dev/null 2>&1 || true
+  if grep -q '^wireguard ' /proc/modules 2>/dev/null; then
     c_ok "Módulo wireguard cargado (vía container privilegiado)."
     return 0
   fi
-  c_warn "No se pudo cargar el módulo; se usará WireGuard userspace (wireguard-go)."
+  c_warn "No se pudo cargar el módulo; los pods/containers usarán userspace (wireguard-go)."
   return 0
 }
 
