@@ -71,17 +71,26 @@
 \cfoot{\thepage}
 \renewcommand{\headrulewidth}{0.3pt}
 
-\title{\textbf{Acceso Remoto Seguro con WireGuard}\\[2pt]
-\large How-To: despliegue, pruebas de conexión y demostraciones\\[6pt]
-\normalsize 72.20 Redes de Información --- ITBA --- 1C 2026}
-\author{Jose Burgos (61525) \and Pedro Curti (61616)}
-\date{\today}
-
 \begin{document}
-\maketitle
-\thispagestyle{fancy}
 
-\begin{abstract}
+% ===================== Carátula (página propia) =====================
+\begin{titlepage}
+  \centering
+  \vspace*{\fill}
+  {\Huge\bfseries Acceso Remoto Seguro con WireGuard\par}
+  \vspace{0.7cm}
+  {\Large How-To: despliegue, pruebas de conexión y demostraciones\par}
+  \vspace{1.3cm}
+  {\large 72.20 Redes de Información\,---\,ITBA\,---\,1\textsuperscript{er} Cuatrimestre 2026\par}
+  \vspace{2.4cm}
+  {\large Jose Burgos (61525)\\[6pt] Pedro Curti (61616)\par}
+  \vspace{1.6cm}
+  {\large \today\par}
+  \vspace*{\fill}
+\end{titlepage}
+
+% ===================== Resumen e índice =====================
+\section*{Resumen}
 \noindent Esta guía documenta, de punta a punta, cómo levantar la solución de
 \textbf{acceso remoto seguro} para la aplicación de microservicios
 \texttt{the-store} usando \textbf{WireGuard} y \textbf{Kubernetes
@@ -90,10 +99,10 @@ NetworkPolicies} sobre un cluster \textbf{Kind} (una sola máquina). Incluye
 conexión con sus salidas reales, y las demostraciones de segmentación, cifrado y
 rotación de claves. Al final, un apéndice reproduce el contenido completo de los
 manifiestos y scripts.
-\end{abstract}
 
-\tableofcontents
 \bigskip
+\tableofcontents
+\clearpage
 
 % =====================================================================
 \section{Alcance: qué resuelve y qué no}
