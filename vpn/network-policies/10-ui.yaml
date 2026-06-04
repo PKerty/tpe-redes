@@ -1,0 +1,23 @@
+# UI: frontend. Recibe del Ingress NGINX y del túnel WireGuard (vpn-system).
+# El tráfico de ambos túneles llega NATeado al pod del gateway (vpn-system),
+# por eso se habilita por namespaceSelector vpn-system.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ui
+  namespace: the-store
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: ui
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vpn-system
+      ports:
+        - { protocol: TCP, port: 8080 }

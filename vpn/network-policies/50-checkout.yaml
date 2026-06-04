@@ -1,0 +1,18 @@
+# Checkout: sólo acepta de UI (orquesta el pago llamando a Carts y Orders).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-checkout
+  namespace: the-store
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: checkout
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ui
+      ports:
+        - { protocol: TCP, port: 8080 }

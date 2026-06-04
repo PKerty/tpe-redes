@@ -1,0 +1,21 @@
+# Carts: sólo acepta de UI y Checkout. NO desde el túnel (sin acceso directo).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-carts
+  namespace: the-store
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: carts
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ui
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: checkout
+      ports:
+        - { protocol: TCP, port: 8080 }

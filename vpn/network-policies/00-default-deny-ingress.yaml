@@ -1,0 +1,11 @@
+# Default-deny de ingress para todo el namespace the-store.
+# A partir de acá, ningún pod recibe tráfico salvo lo que una política explícita
+# habilite. (Egress queda abierto: DNS y dependencias siguen funcionando.)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: the-store
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]

@@ -1,0 +1,22 @@
+# Catalog: sólo acepta de UI y del túnel Site-To-Site (vpn-system).
+# (Es el único servicio de negocio que se expone a la red corporativa.)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-catalog
+  namespace: the-store
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: catalog
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ui
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vpn-system
+      ports:
+        - { protocol: TCP, port: 8080 }
