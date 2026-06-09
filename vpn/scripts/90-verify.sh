@@ -19,6 +19,7 @@ CAT_IP=$(kubectl get svc catalog -n "$APP_NS" -o jsonpath='{.spec.clusterIP}')
 ORD_IP=$(kubectl get svc orders  -n "$APP_NS" -o jsonpath='{.spec.clusterIP}')
 UI_POD=$(kubectl get pod -n "$APP_NS" -l app.kubernetes.io/name=ui      -o jsonpath='{.items[0].metadata.name}')
 CAT_POD=$(kubectl get pod -n "$APP_NS" -l app.kubernetes.io/name=catalog -o jsonpath='{.items[0].metadata.name}')
+NODE_IP=$(node_ip)
 
 c_info "== App funcional =="
 [ "$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 http://localhost/)" = "200" ] \
@@ -47,6 +48,16 @@ if kubectl get netpol default-deny-ingress -n "$APP_NS" >/dev/null 2>&1; then
     && ok "Movimiento lateral Catalog -> Orders BLOQUEADO" || bad "lateral Catalog -> Orders"
 else
   c_warn "  (NetworkPolicies no aplicadas; correr 40-apply-netpol.sh)"
+fi
+
+c_info "== PC externo sin VPN =="
+if docker ps --format '{{.Names}}' | grep -q '^external-pc$'; then
+  [ "$(dcode external-pc "http://$NODE_IP/")" = "200" ] \
+    && ok "external-pc -> Ingress via nodo ($NODE_IP) responde 200 (usuario normal)" || bad "external-pc -> Ingress"
+  [ "$(dcode external-pc "http://$CAT_IP/health")" != "200" ] \
+    && ok "external-pc -> Catalog ClusterIP BLOQUEADO (sin VPN)" || bad "external-pc -> Catalog debería estar bloqueado"
+else
+  c_warn "  (container 'external-pc' no está levantado; correr 25-up-external-pc.sh)"
 fi
 
 c_info "== Site-To-Site (red corporativa) =="

@@ -7,7 +7,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 source ./lib.sh
 
 c_info "Quitando containers y red corporativa..."
-docker rm -f admin corp-gateway corp-pc >/dev/null 2>&1 || true
+docker rm -f admin external-pc corp-gateway corp-pc >/dev/null 2>&1 || true
 docker network rm "$CORP_NET" >/dev/null 2>&1 || true
 
 c_info "Quitando NetworkPolicies de $APP_NS..."

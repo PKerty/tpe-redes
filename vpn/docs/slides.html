@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Acceso Remoto Seguro con WireGuard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+    <style>
+        :root {
+            --nb-bg: #FFFBEB;
+            --nb-primary: #FF6B6B;
+            --nb-secondary: #4ECDC4;
+            --nb-accent: #FFE66D;
+            --nb-dark: #1A1A2E;
+            --nb-black: #000000;
+            --nb-border-width: 3px;
+            --nb-shadow-offset: 6px;
+            --nb-radius: 0px;
+        }
+
+        .reveal-viewport {
+            background: var(--nb-bg) !important;
+        }
+
+        .reveal {
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+            color: var(--nb-black);
+        }
+
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            color: var(--nb-black);
+            text-shadow: none;
+        }
+
+        .reveal h1 {
+            font-size: 2.8em;
+            border-bottom: var(--nb-border-width) solid var(--nb-black);
+            padding-bottom: 0.3em;
+            display: inline-block;
+        }
+
+        .reveal h2 {
+            font-size: 1.8em;
+        }
+
+        .reveal h3 {
+            font-size: 1.3em;
+        }
+
+        .reveal .slides section {
+            text-align: left;
+        }
+
+        .reveal .slides section[data-background-color] {
+            text-align: center;
+        }
+
+        .nb-card {
+            background: #fff;
+            border: var(--nb-border-width) solid var(--nb-black);
+            box-shadow: var(--nb-shadow-offset) var(--nb-shadow-offset) 0 var(--nb-black);
+            padding: 1.2em 1.5em;
+            border-radius: var(--nb-radius);
+            margin-bottom: 1em;
+        }
+
+        .nb-card-accent {
+            background: var(--nb-accent);
+        }
+
+        .nb-card-primary {
+            background: var(--nb-primary);
+            color: #fff;
+        }
+
+        .nb-card-secondary {
+            background: var(--nb-secondary);
+            color: #fff;
+        }
+
+        .nb-card-white {
+            background: #fff;
+        }
+
+        .nb-grid {
+            display: grid;
+            gap: 1em;
+        }
+
+        .nb-grid-3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .nb-grid-5 {
+            grid-template-columns: repeat(5, 1fr);
+        }
+
+        .nb-grid-2 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .reveal table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 0.75em;
+            margin: 1em auto;
+        }
+
+        .reveal table th {
+            background: var(--nb-black);
+            color: #fff;
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 0.8em 1em;
+            border: var(--nb-border-width) solid var(--nb-black);
+        }
+
+        .reveal table td {
+            padding: 0.7em 1em;
+            border: var(--nb-border-width) solid var(--nb-black);
+            background: #fff;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .reveal table tr:nth-child(even) td {
+            background: var(--nb-accent);
+        }
+
+        .reveal table td.highlight {
+            background: var(--nb-secondary);
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .nb-tag {
+            display: inline-block;
+            background: var(--nb-black);
+            color: #fff;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65em;
+            padding: 0.3em 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-radius: var(--nb-radius);
+        }
+
+        .nb-tag-outline {
+            background: transparent;
+            color: var(--nb-black);
+            border: 2px solid var(--nb-black);
+        }
+
+        .nb-title-slide {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+        }
+
+        .nb-title-slide h1 {
+            border: none;
+            font-size: 2.2em;
+            line-height: 1.2;
+            background: #fff;
+            border: var(--nb-border-width) solid var(--nb-black);
+            box-shadow: 8px 8px 0 var(--nb-black);
+            padding: 0.5em 0.8em;
+            display: block;
+        }
+
+        .nb-subtitle {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.9em;
+            font-weight: 400;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.8em;
+            padding: 0.3em 1em;
+            background: #fff;
+            border: 2px solid var(--nb-black);
+            display: inline-block;
+        }
+
+        .nb-authors {
+            margin-top: 2em;
+            font-size: 0.8em;
+            line-height: 1.8;
+        }
+
+        .nb-authors strong {
+            font-family: 'Space Mono', monospace;
+        }
+
+        .nb-icon-bullet {
+            font-size: 1.5em;
+            margin-right: 0.3em;
+            vertical-align: middle;
+        }
+
+        .nb-section-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.6em;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            background: var(--nb-black);
+            color: #fff;
+            padding: 0.2em 0.6em;
+            display: inline-block;
+            margin-bottom: 0.5em;
+        }
+
+        .nb-placeholder {
+            width: 100%;
+            height: 55vh;
+            background: var(--nb-black);
+            border: var(--nb-border-width) solid var(--nb-black);
+            box-shadow: var(--nb-shadow-offset) var(--nb-shadow-offset) 0 #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-family: 'Space Mono', monospace;
+            font-size: 1em;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .nb-service-card {
+            background: #fff;
+            border: var(--nb-border-width) solid var(--nb-black);
+            box-shadow: 4px 4px 0 var(--nb-black);
+            padding: 0.7em 0.8em;
+            text-align: center;
+            border-radius: var(--nb-radius);
+            font-size: 0.7em;
+        }
+
+        .nb-service-card .nb-service-name {
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+            font-size: 1.1em;
+            text-transform: uppercase;
+        }
+
+        .nb-service-card .nb-service-lang {
+            margin-top: 0.3em;
+            font-size: 0.85em;
+        }
+
+        .nb-problem-card {
+            background: #fff;
+            border: var(--nb-border-width) solid var(--nb-black);
+            box-shadow: var(--nb-shadow-offset) var(--nb-shadow-offset) 0 var(--nb-black);
+            padding: 1.2em 1.5em;
+            border-radius: var(--nb-radius);
+            text-align: left;
+        }
+
+        .nb-problem-card h3 {
+            font-size: 0.85em;
+            margin-bottom: 0.4em;
+            border-bottom: 2px solid var(--nb-black);
+            padding-bottom: 0.3em;
+        }
+
+        .nb-problem-card p {
+            font-size: 0.65em;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .nb-zone {
+            border: var(--nb-border-width) solid var(--nb-black);
+            padding: 1em;
+            text-align: center;
+            font-size: 0.7em;
+        }
+
+        .nb-zone h4 {
+            font-size: 0.9em;
+            margin-bottom: 0.5em;
+        }
+
+        .nb-zone ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            text-align: left;
+            font-size: 0.9em;
+        }
+
+        .nb-zone ul li {
+            margin-bottom: 0.3em;
+        }
+
+        .nb-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Space Mono', monospace;
+            font-size: 1.8em;
+            color: var(--nb-black);
+            padding: 0 0.2em;
+        }
+
+        .nb-conclusion-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.8em;
+            font-size: 0.8em;
+            margin-bottom: 0.8em;
+        }
+
+        .nb-conclusion-item .nb-ci-icon {
+            font-size: 1.4em;
+            flex-shrink: 0;
+        }
+
+        .nb-conclusion-item .nb-ci-text {
+            text-align: left;
+        }
+
+        .nb-conclusion-item .nb-ci-text strong {
+            font-family: 'Space Mono', monospace;
+        }
+
+        .reveal .progress {
+            height: 6px;
+            background: #ddd;
+        }
+
+        .reveal .progress span {
+            background: var(--nb-black) !important;
+        }
+
+        .reveal .controls button {
+            color: var(--nb-black) !important;
+        }
+
+        .reveal .slide-number {
+            font-family: 'Space Mono', monospace;
+            background: var(--nb-black);
+            color: #fff;
+            padding: 0.2em 0.5em;
+            font-size: 0.5em;
+            border-radius: 0;
+        }
+
+        .nb-why-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.2em;
+            align-items: start;
+        }
+
+        .nb-why-point {
+            font-size: 0.72em;
+            line-height: 1.5;
+            padding: 0.3em 0;
+        }
+
+        .nb-why-point strong {
+            font-family: 'Space Mono', monospace;
+        }
+
+        .nb-demo-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8em;
+            font-size: 0.85em;
+            margin-bottom: 0.6em;
+            text-align: left;
+        }
+
+        .nb-demo-number {
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+            font-size: 1.5em;
+            width: 1.5em;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .slide-demo {
+            color: #fff;
+        }
+
+        .slide-demo h2 {
+            color: #fff;
+            border-bottom: 3px solid #fff;
+            display: inline-block;
+            padding-bottom: 0.2em;
+        }
+
+        .slide-demo .nb-tag {
+            background: #fff;
+            color: var(--nb-primary);
+            margin-bottom: 1em;
+        }
+
+        .slide-conclusion {
+            color: #fff;
+        }
+
+        .slide-conclusion h2 {
+            color: #fff;
+        }
+
+        .slide-conclusion .nb-conclusion-item strong {
+            color: #fff;
+        }
+
+        .reveal .nb-questions {
+            font-family: 'Space Mono', monospace;
+            font-size: 2.5em;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #fff;
+            background: var(--nb-black);
+            padding: 0.3em 0.8em;
+            display: inline-block;
+            border: var(--nb-border-width) solid #fff;
+            box-shadow: 6px 6px 0 #fff;
+            margin-top: 0.5em;
+        }
+
+        @media (max-width: 800px) {
+            .nb-grid-3 { grid-template-columns: 1fr; }
+            .nb-grid-5 { grid-template-columns: repeat(2, 1fr); }
+            .nb-grid-2 { grid-template-columns: 1fr; }
+            .nb-why-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- ==================== SLIDE 1: TITULO ==================== -->
+            <section data-background-color="#FFE66D">
+                <div class="nb-title-slide">
+                    <h1>Acceso Remoto Seguro<br>con WireGuard</h1>
+                    <div class="nb-subtitle">Client-to-Site y Site-to-Site sobre Kubernetes</div>
+                    <div class="nb-authors">
+                        <strong>Pedro Curti</strong> (61616) &nbsp;&bull;&nbsp; <strong>Jose Burgos</strong> (61525)<br>
+                        72.20 Redes de Informaci&oacute;n &mdash; ITBA &mdash; 1C 2026
+                    </div>
+                </div>
+                <aside class="notes">
+                    Buenas. Somos Pedro y Jose, y hoy les presentamos nuestro trabajo practico sobre acceso remoto seguro con WireGuard. Trabajamos sobre una plataforma de e-commerce llamada The Store, que corre en Kubernetes.
+                </aside>
+            </section>
+
+            <!-- ==================== SLIDE 2: THE STORE ==================== -->
+            <section>
+                <div class="nb-section-label">Contexto</div>
+                <h2>La soluci&oacute;n actual &mdash; The Store</h2>
+                <div class="nb-grid nb-grid-5" style="margin-top: 1em;">
+                    <div class="nb-service-card">
+                        <div class="nb-service-name">UI</div>
+                        <div class="nb-service-lang">Java</div>
+                    </div>
+                    <div class="nb-service-card">
+                        <div class="nb-service-name">Catalog</div>
+                        <div class="nb-service-lang">Go</div>
+                    </div>
+                    <div class="nb-service-card">
+                        <div class="nb-service-name">Cart</div>
+                        <div class="nb-service-lang">Java</div>
+                    </div>
+                    <div class="nb-service-card">
+                        <div class="nb-service-name">Orders</div>
+                        <div class="nb-service-lang">Java</div>
+                    </div>
+                    <div class="nb-service-card">
+                        <div class="nb-service-name">Checkout</div>
+                        <div class="nb-service-lang">Node.js</div>
+                    </div>
+                </div>
+                <div class="nb-grid nb-grid-2" style="margin-top: 1.2em; font-size: 0.75em;">
+                    <div class="nb-card nb-card-white">
+                        <strong>ClusterIP</strong> &mdash; Solo accesibles dentro del cluster
+                    </div>
+                    <div class="nb-card nb-card-white">
+                        <strong>Ingress NGINX</strong> &mdash; Puerto 80, sin TLS
+                    </div>
+                </div>
+                <aside class="notes">
+                    The Store es una plataforma de e-commerce con 5 microservicios corriendo en un cluster Kubernetes local. Todos los servicios se comunican por ClusterIP — o sea, solo se acceden entre ellos dentro del cluster. El unico punto de entrada es un Ingress NGINX en el puerto 80, sin TLS. Los endpoints operacionales — para hacer testing, inyectar errores, ver metricas — no tienen ningun tipo de autenticacion. Funciona, pero solo si estas en la misma red donde corre el cluster.
+                </aside>
+            </section>
+
+            <!-- ==================== SLIDE 3: PROBLEMAS ==================== -->
+            <section>
+                <div class="nb-section-label">Problema</div>
+                <h2>Problemas identificados</h2>
+                <div class="nb-grid nb-grid-3" style="margin-top: 1em;">
+                    <div class="nb-problem-card fragment">
+                        <h3>&#x1F6AB; Sin acceso remoto</h3>
+                        <p>No hay mecanismo para que un admin gestione el cluster desde afuera. <code>kubectl</code> y <code>docker</code> solo funcionan en la maquina local.</p>
+                    </div>
+                    <div class="nb-problem-card fragment">
+                        <h3>&#x1F504; Sin segmentaci&oacute;n</h3>
+                        <p>Cualquier pod se comunica con cualquier otro. No hay NetworkPolicies. El movimiento lateral es total.</p>
+                    </div>
+                    <div class="nb-problem-card fragment">
+                        <h3>&#x1F513; Acceso desprotegido</h3>
+                        <p>Las credenciales y comandos de gestion transitan sin cifrado. No hay tunel seguro para operaciones administrativas.</p>
+                    </div>
+                </div>
+                <aside class="notes">
+                    Identificamos tres problemas principales. Primero, no hay forma de acceder al cluster remotamente. Si el admin no esta fisicamente en la red local, no puede hacer nada. Segundo, no hay segmentacion de red: cualquier pod se comunica con cualquier otro sin restriccion, lo que habilita movimiento lateral. Tercero, las operaciones administrativas viajan sin cifrado — kubectl, acceso a servicios internos, todo en claro. Estos tres problemas se resuelven con nuestra solucion.
+                </aside>
+            </section>
+
+            <!-- ==================== SLIDE 4: SOLUCION ==================== -->
+            <section>
+                <div class="nb-section-label">Soluci&oacute;n</div>
+                <h2>Nuestra soluci&oacute;n &mdash; Visi&oacute;n general</h2>
+                <div class="nb-grid nb-grid-2" style="margin-top: 1.2em;">
+                    <div class="nb-card nb-card-accent fragment">
+                        <h3 style="font-size: 0.8em; border-bottom: 2px solid #000; padding-bottom: 0.3em;">VPN WireGuard</h3>
+                        <ul style="font-size: 0.7em; line-height: 1.6; list-style: none; padding: 0;">
+                            <li><strong>Client-to-Site:</strong> admin remoto con su propio cliente WireGuard</li>
+                            <li><strong>Site-to-Site:</strong> tunel permanente con la red corporativa</li>
+                        </ul>
+                    </div>
+                    <div class="nb-card nb-card-secondary fragment" style="color: #fff;">
+                        <h3 style="font-size: 0.8em; color: #fff; border-bottom: 2px solid #fff; padding-bottom: 0.3em;">NetworkPolicies K8s</h3>
+                        <ul style="font-size: 0.7em; line-height: 1.6; list-style: none; padding: 0; color: #fff;">
+                            <li>Default-deny + reglas por servicio</li>
+                            <li>Zero trust de ingress</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="fragment" style="text-align: center; margin-top: 1em;">
+                    <div class="nb-card nb-card-white" style="display: inline-block; font-size: 0.8em; padding: 0.6em 2em;">
+                        <strong>Acceso autorizado por clave + segmentaci&oacute;n a nivel red</strong>
+                    </div>
+                </div>
+                <aside class="notes">
+                    Nuestra solucion tiene dos pilares. Primero, una VPN con WireGuard que ofrece dos escenarios: Client-to-Site, donde un admin remoto se conecta con su propio cliente WireGuard y accede al cluster completo con kubectl; y Site-to-Site, donde un tunel permanente permite que toda la red corporativa acceda a los servicios del cluster sin instalar nada en las PCs de los empleados. Segundo, NetworkPolicies de Kubernetes que implementan un modelo de zero trust: todo el trafico esta bloqueado por defecto, y solo se habilita lo que cada servicio necesita. La combinacion de ambas cosas nos da acceso autorizado por clave criptografica mas segmentacion a nivel de red.
+                </aside>
+            </section>
+
+            <!-- ==================== SLIDE 5: MAPEO ==================== -->
+            <section>
+                <div class="nb-section-label">Soluci&oacute;n</div>
+                <h2>C&oacute;mo cubre los problemas</h2>
+                <table style="margin-top: 1em; font-size: 0.7em;">
+                    <thead>
+                        <tr>
+                            <th>Problema</th>
+                            <th>Soluci&oacute;n</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="fragment">
+                            <td><strong>Sin acceso remoto</strong></td>
+                            <td>VPN Client-to-Site (admin) + Site-to-Site (corporativo)</td>
+                        </tr>
+                        <tr class="fragment">
+                            <td><strong>Sin segmentaci&oacute;n</strong></td>
+                            <td>NetworkPolicies: default-deny + reglas por servicio</td>
+                        </tr>
+                        <tr class="fragment">
+                            <td><strong>Acceso admin desprotegido</strong></td>
+                            <td>Tunel cifrado ChaCha20-Poly1305 + autenticaci&oacute;n por clave WireGuard</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <aside class="notes">
+                    Aca se ve como cada problema se mapea a la solucion. El acceso remoto se resuelve con los dos tuneles VPN: C2S para admins, S2S para la red corporativa. La segmentacion se resuelve con NetworkPolicies que bloquean todo por defecto y solo permiten lo necesario. Y el acceso admin desprotegido se resuelve con cifrado ChaCha20-Poly1305 en el tunel y autenticacion mutua por claves WireGuard — si no tenes la clave, no entras.
+                </aside>
+            </section>
+
+            <!-- ==================== SLIDE 6: POR QUE WIREGUARD ==================== -->
+            <section>
+                <div class="nb-section-label">Justificaci&oacute;n</div>
+                <h2>&iquest;Por qu&eacute; WireGuard?</h2>
+                <div class="nb-why-grid" style="margin-top: 1em;">
+                    <div>
+                        <div class="nb-why-point fragment">
+                            <strong>AllowedIPs nativo</strong> &mdash; Segmentaci&oacute;n de tr&aacute;fico sin configuraci&oacute;n adicional
+                        </div>
+                        <div class="nb-why-point fragment">
+                            <strong>Handshake en 1 RTT</strong> &mdash; Conexi&oacute;n en milisegundos con Noise IK
+                        </div>
+                        <div class="nb-why-point fragment">
+                            <strong>Sin PKI</strong> &mdash; 4 pares de claves en archivos de texto
+                        </div>
+                        <div class="nb-why-point fragment">
+                            <strong>Kernel-space</strong> &mdash; ~4000 l&iacute;neas de c&oacute;digo, rendimiento nativo
+                        </div>
+                    </div>
+                    <div class="fragment">
+                        <table style="font-size: 0.6em;">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>OpenVPN</th>
+                                    <th style="background: var(--nb-secondary);">WireGuard</th>
+                                    <th>IPsec</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Handshake</td>
+                                    <td>TLS</td>
+                                    <td class="highlight">Noise IK (1 RTT)</td>
+                                    <td>IKEv2</td>
+                                </tr>
+                                <tr>
+                                    <td>Claves</td>
+                                    <td>PKI X.509</td>
+                                    <td class="highlight">Pre-compartidas</td>
+                                    <td>PKI X.509</td>
+                                </tr>
+                                <tr>
+                                    <td>Complejidad</td>
+                                    <td>Alta</td>
+                                    <td class="highlight">Baja</td>
+                                    <td>Muy alta</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <aside class="notes">
+                    Elegimos WireGuard por cuatro razones clave para nuestro problema. Primero, AllowedIPs: WireGuard tiene segmentacion de trafico nativa — cada tunel solo enruta lo que definimos, sin configuracion extra. Segundo, el handshake es de un solo round-trip gracias al protocolo Noise IK. Tercero, no necesitamos PKI: manejamos 4 pares de claves en archivos de texto, punto. Cuarto, corre en kernel-space con apenas 4000 lineas de codigo. OpenVPN e IPsec podrian resolver esto, pero WireGuard lo hace con una fraccion de la complejidad.
+                </aside>
+            </section>
+
+            <!-- ==================== SLIDE 7: ARQUITECTURA ==================== -->
+            <section>
+                <h2 style="text-align: center;">Arquitectura completa</h2>
+                <div class="nb-placeholder">
+                    <span>&#x2B1B; Diagrama de arquitectura &mdash; reemplazar con imagen</span>
+                </div>
+                <aside class="notes">
+                    Este es el diagrama completo. En el centro, el cluster Kubernetes con los 5 servicios y el gateway WireGuard como pod dedicado. El gateway tiene dos interfaces: wg0 para el tunel site-to-site con la red corporativa, y wg1 para el tunel client-to-site con el admin remoto. Las NetworkPolicies envuelven los servicios como capa de defensa: default-deny con reglas explicitas por servicio. A la izquierda, la red corporativa con un gateway que tiene WireGuard y las PCs de los empleados que no necesitan instalar nada. A la derecha, el admin remoto con su cliente WireGuard. Todo el trafico que cruza los tuneles va cifrado con ChaCha20-Poly1305.
+                </aside>
+            </section>
+
+            <!-- ==================== SLIDE 8: DEMO ==================== -->
+            <section data-background-color="#FF6B6B" class="slide-demo">
+                <div style="text-align: center;">
+                    <div class="nb-tag">En vivo</div>
+                    <h2>Demo en vivo</h2>
+                    <div style="max-width: 700px; margin: 1.5em auto 0; text-align: left;">
+                        <div class="nb-demo-item fragment">
+                            <div class="nb-demo-number">1</div>
+                            <div>Admin accede remotamente v&iacute;a Client-to-Site</div>
+                        </div>
+                        <div class="nb-demo-item fragment">
+                            <div class="nb-demo-number">2</div>
+                            <div>Empleado accede sin cliente VPN v&iacute;a Site-to-Site</div>
+                        </div>
+                        <div class="nb-demo-item fragment">
+                            <div class="nb-demo-number">3</div>
+                            <div>Segmentaci&oacute;n &mdash; admin no puede llegar a Orders</div>
+                        </div>
+                        <div class="nb-demo-item fragment">
+                            <div class="nb-demo-number">4</div>
+                            <div>PC externo sin VPN &mdash; no puede acceder a nada</div>
+                        </div>
+                    </div>
+                </div>
+                <aside class="notes">
+                    Pasamos a la demo. Vamos a mostrar los tres casos de uso principales y un caso negativo: un PC externo sin VPN que demuestra que sin la clave WireGuard no se puede acceder a nada del cluster. Cambiamos a la terminal.
+                </aside>
+            </section>
+
+            <!-- ==================== SLIDE 9: CONCLUSION ==================== -->
+            <section data-background-color="#4ECDC4" class="slide-conclusion">
+                <div style="text-align: center;">
+                    <h2>Conclusi&oacute;n</h2>
+                    <div style="max-width: 700px; margin: 1em auto 0; text-align: left;">
+                        <div class="nb-conclusion-item fragment">
+                            <div class="nb-ci-icon">&#x1F512;</div>
+                            <div class="nb-ci-text"><strong>Acceso remoto seguro</strong> para admins y red corporativa</div>
+                        </div>
+                        <div class="nb-conclusion-item fragment">
+                            <div class="nb-ci-icon">&#x1F6E1;</div>
+                            <div class="nb-ci-text"><strong>Segmentaci&oacute;n con NetworkPolicies</strong> &mdash; zero trust de ingress</div>
+                        </div>
+                        <div class="nb-conclusion-item fragment">
+                            <div class="nb-ci-icon">&#x1F510;</div>
+                            <div class="nb-ci-text"><strong>Cifrado extremo a extremo</strong> con ChaCha20-Poly1305</div>
+                        </div>
+                        <div class="nb-conclusion-item fragment">
+                            <div class="nb-ci-icon">&#x1F504;</div>
+                            <div class="nb-ci-text"><strong>Rotaci&oacute;n de claves en caliente</strong> sin reiniciar el gateway</div>
+                        </div>
+                    </div>
+                    <div class="fragment" style="margin-top: 1.5em;">
+                        <div class="nb-questions">&iquest;Preguntas?</div>
+                    </div>
+                </div>
+                <aside class="notes">
+                    Para cerrar: logramos acceso remoto seguro tanto para admins individuales como para la red corporativa completa, sin instalar software en los equipos de los empleados. Implementamos segmentacion con NetworkPolicies bajo un modelo de zero trust. Todo el trafico va cifrado extremo a extremo. Y la rotacion de claves se hace en caliente, sin necesidad de reiniciar el gateway. Gracias, preguntas?
+                </aside>
+            </section>
+
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/markdown/markdown.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/zoom/zoom.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            controls: true,
+            progress: true,
+            center: true,
+            transition: 'slide',
+            transitionSpeed: 'fast',
+            slideNumber: true,
+            showSlideNumber: 'all',
+            plugins: [RevealNotes, RevealMarkdown, RevealHighlight, RevealZoom]
+        });
+    </script>
+</body>
+</html>

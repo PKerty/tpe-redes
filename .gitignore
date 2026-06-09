@@ -21,6 +21,7 @@ kubeconfig
 
 # --- Local del harness / herramientas ---
 .claude/
+docs/HANDOFF.md
 
 # --- Sistema operativo / editores ---
 .DS_Store
