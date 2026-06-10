@@ -30,6 +30,3 @@ docs/HANDOFF.md
 .idea/
 .vscode/
 
-# --- Capturas de tráfico de la demo ---
-*.pcap
-*.pcapng
