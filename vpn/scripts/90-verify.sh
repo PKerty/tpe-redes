@@ -10,8 +10,8 @@ PASS=0; FAIL=0
 ok()   { c_ok   "  PASS  $1"; PASS=$((PASS+1)); }
 bad()  { c_err  "  FAIL  $1"; FAIL=$((FAIL+1)); }
 
-# code <url> desde un container docker
-dcode() { docker exec "$1" curl -s -o /dev/null -w "%{http_code}" --max-time 4 "$2" 2>/dev/null || echo 000; }
+# code <container> <url> [args extra de curl] desde un container docker
+dcode() { local c="$1" url="$2"; shift 2; docker exec "$c" curl -s -o /dev/null -w "%{http_code}" --max-time 4 "$@" "$url" 2>/dev/null || echo 000; }
 # code <url> desde un pod del cluster
 kcode() { kubectl exec -n "$APP_NS" "$1" -- curl -s -o /dev/null -w "%{http_code}" --max-time 4 "$2" 2>/dev/null || echo 000; }
 
@@ -52,7 +52,9 @@ fi
 
 c_info "== PC externo sin VPN =="
 if docker ps --format '{{.Names}}' | grep -q '^external-pc$'; then
-  [ "$(dcode external-pc "http://$NODE_IP/")" = "200" ] \
+  # El Ingress de la UI rutea por Host "localhost" (viene así del chart de
+  # the-store); sin el header, ingress-nginx responde 404.
+  [ "$(dcode external-pc "http://$NODE_IP/" -H 'Host: localhost')" = "200" ] \
     && ok "external-pc -> Ingress via nodo ($NODE_IP) responde 200 (usuario normal)" || bad "external-pc -> Ingress"
   [ "$(dcode external-pc "http://$CAT_IP/health")" != "200" ] \
     && ok "external-pc -> Catalog ClusterIP BLOQUEADO (sin VPN)" || bad "external-pc -> Catalog debería estar bloqueado"

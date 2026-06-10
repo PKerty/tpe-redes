@@ -1,1429 +1,398 @@
 % =====================================================================
-%  TPE Redes de Información - Acceso Remoto Seguro con WireGuard
-%  Documento HOW-TO (guía de despliegue y pruebas)
-%
-%  Documento AUTOCONTENIDO (sin dependencias externas): compila tal cual en
-%  Overleaf o localmente con pdfLaTeX. Subir sólo este archivo.
-%      pdflatex how-to.tex && pdflatex how-to.tex     (2 pasadas por el índice)
+%  How-To unificado — Acceso Remoto Seguro con WireGuard sobre the-store
+%  Documento autocontenido. Compilar con:  pdflatex how-to.tex  (x2)
+%  o:  latexmk -pdf how-to.tex
 % =====================================================================
 \documentclass[11pt,a4paper]{article}
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[spanish,es-noshorthands,es-noindentfirst]{babel}
-\usepackage[margin=2.4cm]{geometry}
+\usepackage[spanish,es-noshorthands,es-tabla]{babel}
+\usepackage[a4paper,margin=2.4cm]{geometry}
+\usepackage{lmodern}
+\usepackage{microtype}
 \usepackage{xcolor}
-\usepackage{listings}
 \usepackage{graphicx}
-\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{tabularx}
 \usepackage{array}
 \usepackage{enumitem}
+\usepackage{listings}
 \usepackage{fancyhdr}
-\usepackage[hidelinks,colorlinks=true,linkcolor=blue!55!black,urlcolor=blue!55!black]{hyperref}
+\usepackage{titlesec}
+\usepackage[hidelinks,colorlinks=true,linkcolor=azulvpn,urlcolor=azulvpn,citecolor=azulvpn]{hyperref}
 
-% ---- colores ----
-\definecolor{cmdbg}{gray}{0.96}
-\definecolor{outbg}{rgb}{0.97,0.98,1.0}
-\definecolor{rule}{gray}{0.55}
-\definecolor{cmt}{rgb}{0.30,0.45,0.30}
-\definecolor{kw}{rgb}{0.20,0.20,0.60}
+% ---- Paleta ----
+\definecolor{azulvpn}{HTML}{1F4E79}
+\definecolor{grisfondo}{HTML}{F4F6F8}
+\definecolor{grisborde}{HTML}{D0D7DE}
+\definecolor{verdeok}{HTML}{1A7F37}
+\definecolor{rojoko}{HTML}{B42318}
+\definecolor{comentario}{HTML}{6A737D}
+\definecolor{keyword}{HTML}{8250DF}
+\definecolor{string}{HTML}{0A3069}
 
-% ---- mapeo de acentos para que listings compile con pdflatex ----
-\lstset{
-  extendedchars=true, inputencoding=utf8,
-  literate=%
-    {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
-    {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
-    {ñ}{{\~n}}1 {Ñ}{{\~N}}1 {ü}{{\"u}}1 {Ü}{{\"U}}1
-    {¿}{{?`}}1 {¡}{{!`}}1 {—}{{---}}1
+% ---- Encabezado / pie ----
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+\fancyhead[L]{\small\textcolor{azulvpn}{TPE Redes — WireGuard + Kubernetes}}
+\fancyhead[R]{\small\leftmark}
+\fancyfoot[C]{\small\thepage}
+
+% ---- Títulos ----
+\titleformat{\section}{\Large\bfseries\color{azulvpn}}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\large\bfseries\color{azulvpn!85!black}}{\thesubsection}{0.6em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection}{0.6em}{}
+
+% ---- Estilo de código ----
+\lstdefinestyle{shell}{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{grisfondo},
+  frame=single,
+  framesep=6pt,
+  rulecolor=\color{grisborde},
+  breaklines=true,
+  breakatwhitespace=false,
+  postbreak=\mbox{\textcolor{comentario}{$\hookrightarrow$}\space},
+  showstringspaces=false,
+  columns=fullflexible,
+  keepspaces=true,
+  upquote=true,
+  commentstyle=\color{comentario}\itshape,
+  morecomment=[l]{\#},
 }
+\lstset{style=shell}
 
-% ---- estilos ----
-\lstdefinestyle{cmd}{
-  basicstyle=\footnotesize\ttfamily,
-  backgroundcolor=\color{cmdbg},
-  frame=single, framerule=0.4pt, rulecolor=\color{rule},
-  breaklines=true, breakatwhitespace=false, postbreak=\mbox{\textcolor{rule}{$\hookrightarrow$}\space},
-  columns=fullflexible, keepspaces=true, showstringspaces=false,
-  xleftmargin=4pt, xrightmargin=4pt, aboveskip=6pt, belowskip=6pt,
-}
-\lstdefinestyle{out}{
-  basicstyle=\scriptsize\ttfamily,
-  backgroundcolor=\color{outbg},
-  frame=leftline, framerule=1.2pt, rulecolor=\color{rule},
-  breaklines=true, columns=fullflexible, keepspaces=true, showstringspaces=false,
-  xleftmargin=6pt, aboveskip=6pt, belowskip=8pt,
-}
-\lstdefinestyle{file}{
-  basicstyle=\scriptsize\ttfamily,
-  backgroundcolor=\color{cmdbg},
-  frame=single, framerule=0.4pt, rulecolor=\color{rule},
-  numbers=left, numberstyle=\tiny\color{rule}, numbersep=6pt,
-  breaklines=true, columns=fullflexible, keepspaces=true, showstringspaces=false,
-  commentstyle=\color{cmt}, keywordstyle=\color{kw},
-  xleftmargin=18pt, aboveskip=6pt, belowskip=8pt,
-}
-\newcommand{\cmd}[1]{\lstinline[basicstyle=\ttfamily]!#1!}
+\newcommand{\cmd}[1]{\texttt{#1}}
+\newcommand{\si}{\textcolor{verdeok}{\textbf{\checkmark}}}
+\newcommand{\no}{\textcolor{rojoko}{\textbf{\ding{55}}}}
+\usepackage{pifont}
+\renewcommand{\si}{\textcolor{verdeok}{\ding{51}}}
+\renewcommand{\no}{\textcolor{rojoko}{\ding{55}}}
 
-\pagestyle{fancy}\fancyhf{}
-\lhead{\small TPE Redes -- Acceso Remoto Seguro con WireGuard}
-\rhead{\small How-To}
-\cfoot{\thepage}
-\renewcommand{\headrulewidth}{0.3pt}
+\setlist{itemsep=2pt,topsep=3pt}
 
+% ---- Índice: más ancho para el número de sección (babel agrega un punto,
+%      y "10." no entra en los 1.5em por defecto de article) ----
+\makeatletter
+\renewcommand*\l@section[2]{%
+  \ifnum \c@tocdepth >\z@
+    \addpenalty\@secpenalty
+    \addvspace{1.0em \@plus\p@}%
+    \setlength\@tempdima{2.3em}%
+    \begingroup
+      \parindent \z@ \rightskip \@pnumwidth
+      \parfillskip -\@pnumwidth
+      \leavevmode \bfseries
+      \advance\leftskip\@tempdima
+      \hskip -\leftskip
+      #1\nobreak\hfil
+      \nobreak\hb@xt@\@pnumwidth{\hss #2}\par
+    \endgroup
+  \fi}
+\makeatother
+
+% =====================================================================
 \begin{document}
 
-% ===================== Carátula (página propia) =====================
+% --------------------------- CARÁTULA --------------------------------
 \begin{titlepage}
-  \centering
-  \vspace*{\fill}
-  {\Huge\bfseries Acceso Remoto Seguro con WireGuard\par}
-  \vspace{0.7cm}
-  {\Large How-To: despliegue, pruebas de conexión y demostraciones\par}
-  \vspace{1.3cm}
-  {\large 72.20 Redes de Información\,---\,ITBA\,---\,1\textsuperscript{er} Cuatrimestre 2026\par}
-  \vspace{2.4cm}
-  {\large Jose Burgos (61525)\\[6pt] Pedro Curti (61616)\par}
-  \vspace{1.6cm}
-  {\large \today\par}
-  \vspace*{\fill}
+\thispagestyle{empty}
+\centering
+\vspace*{2.2cm}
+
+{\color{azulvpn}\rule{\linewidth}{1.2pt}}\\[0.5cm]
+{\Huge\bfseries\color{azulvpn} Acceso Remoto Seguro\\[0.25cm] con WireGuard sobre \textit{the-store}}\\[0.4cm]
+{\large Despliegue, pruebas y alcance acotado de la solución}\\[0.3cm]
+{\color{azulvpn}\rule{\linewidth}{1.2pt}}\\[1.4cm]
+
+{\large\bfseries Trabajo Práctico Especial — Redes de Información}\\[0.4cm]
+{\large WireGuard (Client-To-Site / Site-To-Site) + Kubernetes NetworkPolicies}\\[2.2cm]
+
+\begin{tabular}{rl}
+\textbf{Plataforma:} & Kind (cluster de una sola PC) \\[4pt]
+\textbf{Aplicación:}  & the-store (5 microservicios) \\[4pt]
+\textbf{Documento:}   & How-To unificado + problemática \\
+\end{tabular}
+
+\vfill
+{\large\today}
 \end{titlepage}
 
-% ===================== Resumen e índice =====================
+% --------------------------- RESUMEN ---------------------------------
+\phantomsection
 \section*{Resumen}
-\noindent Esta guía documenta, de punta a punta, cómo levantar la solución de
-\textbf{acceso remoto seguro} para la aplicación de microservicios
-\texttt{the-store} usando \textbf{WireGuard} y \textbf{Kubernetes
-NetworkPolicies} sobre un cluster \textbf{Kind} (una sola máquina). Incluye
-\emph{todos} los comandos para desplegar la infraestructura, las pruebas de
-conexión con sus salidas reales, y las demostraciones de segmentación, cifrado y
-rotación de claves. Al final, un apéndice reproduce el contenido completo de los
-manifiestos y scripts.
+\addcontentsline{toc}{section}{Resumen}
+Esta guía documenta, de punta a punta, una solución de \textbf{acceso remoto
+seguro} al cluster de microservicios \textit{the-store}: cómo desplegarla, cómo
+probarla y \textbf{qué problemas resuelve y cuáles no}. La
+solución combina \textbf{WireGuard} (túneles cifrados Client-To-Site y
+Site-To-Site) con \textbf{Kubernetes NetworkPolicies} (segmentación de red).
 
-\bigskip
+El documento está dividido en dos partes. La \textbf{Parte~I} la
+problemática. La \textbf{Parte~II} es el how-to operativo:
+despliegue paso a paso y demostraciones reproducibles.
+
+\newpage
 \tableofcontents
-\clearpage
+\newpage
 
 % =====================================================================
-\section{Alcance: qué resuelve y qué no}
+\phantomsection
+\part*{Parte I — Problemática}
+\addcontentsline{toc}{part}{Parte I — Problemática}
 % =====================================================================
-La aplicación corre en un cluster Kind cuyo único punto de entrada es un Ingress
-NGINX en \cmd{localhost:80}; fuera de eso, \textbf{nada es alcanzable desde fuera
-del nodo de forma segura} (todos los \texttt{Services} son \texttt{ClusterIP}).
-Acotamos el trabajo a \textbf{tres problemas} que sí resolvemos:
 
-\begin{longtable}{@{}p{0.5cm}p{8.5cm}p{5.5cm}@{}}
-\textbf{A} & No hay acceso administrativo remoto seguro (\texttt{kubectl},
-servicios internos) & WireGuard \textbf{Client-To-Site} \\[2pt]
-\textbf{B} & Una red externa no puede consumir servicios sin instalar un cliente
-VPN por equipo & WireGuard \textbf{Site-To-Site} \\[2pt]
-\textbf{C} & Sin segmentación, el túnel habilita acceso total (movimiento
-lateral) & \textbf{NetworkPolicies} default-deny \\
-\end{longtable}
+\section{Contexto real del deploy}
+\textit{The Store} corre sobre un cluster \textbf{Kind} (una sola máquina) con 5
+microservicios: UI, Catalog, Cart, Orders y Checkout. El estado verificado sobre
+el repositorio (\cmd{dist/kubernetes.yaml}, \cmd{local.sh}) es:
 
-\noindent \textbf{Fuera de alcance (declarado):} mTLS/Service Mesh intra-cluster,
-TLS en el Ingress, gestión de secretos y CI/CD real por el túnel. Son controles
-de \emph{otra capa}, no de acceso remoto. El detalle está en
-\texttt{docs/problematica-acotada.md}.
-
-% =====================================================================
-\section{Arquitectura}
-% =====================================================================
-\begin{lstlisting}[style=out,basicstyle=\tiny\ttfamily]
-  Red Corporativa 'corp-net' (172.30.0.0/24)        Cluster Kubernetes (Kind)
- +-----------------------------+                 +---------------------------------+
- | corp-pc 172.30.0.50         |                 |  ns: the-store                  |
- |   (SIN WireGuard)           |   Site-To-Site  |   UI . Catalog . Cart .         |
- |     | ruta estatica         |   tunel wg0     |   Orders . Checkout (ClusterIP) |
- |     v                       |  ChaCha20       |                                 |
- | corp-gateway 172.30.0.1 (WG)+====================>  ns: vpn-system              |
- +-----------------------------+                 |     pod wg-gateway              |
-                                                 |     NodePort UDP 31820 / 31821  |
- +-----------------------------+   Client-To-Site|     | NAT -> 10.96.0.0/16 (svc) |
- | admin (WG client)           +====================>  |        10.244.0.0/16 (pod)|
- |   10.200.0.2                |   tunel wg1     +---------------------------------+
- +-----------------------------+  ChaCha20         NetworkPolicies: default-deny + reglas
-       kubectl -> 10.96.0.1
-\end{lstlisting}
-
-\noindent\textbf{Mapa de red} (centralizado en \texttt{vpn/scripts/lib.sh}):
-
-\begin{longtable}{@{}lllll@{}}
-\textbf{Túnel} & \textbf{Interfaz gw} & \textbf{Subred túnel} & \textbf{Peer} & \textbf{NodePort UDP} \\
-\hline
-Client-To-Site & \texttt{wg1} & \texttt{10.200.0.0/24} & admin \texttt{10.200.0.2} & \texttt{31821} \\
-Site-To-Site   & \texttt{wg0} & \texttt{10.100.0.0/30} & corp \texttt{10.100.0.1}  & \texttt{31820} \\
-\end{longtable}
-\noindent Red corporativa: \texttt{172.30.0.0/24} (corp-gateway \texttt{.1},
-corp-pc \texttt{.50}). CIDRs del cluster ruteados por el túnel: services
-\texttt{10.96.0.0/16}, pods \texttt{10.244.0.0/16}.
-
-\medskip
-\noindent\textbf{Grafo de llamadas de la app} (define las NetworkPolicies):
-UI $\rightarrow$ \{Catalog, Carts, Orders, Checkout\}; \;
-Checkout $\rightarrow$ \{Carts, Orders\}. \;
-Catalog y UI además aceptan tráfico del túnel (\texttt{vpn-system}); Orders y
-Carts \emph{no}.
-
-% =====================================================================
-\section{Prerrequisitos}
-% =====================================================================
-\begin{itemize}[nosep]
-  \item \textbf{Docker}, \textbf{Kind} y \textbf{kubectl} instalados y Docker corriendo.
-  \item Módulo \cmd{wireguard} del kernel (modo primario). Si no está disponible,
-        la imagen cae a \textbf{userspace} (\cmd{wireguard-go}) de forma
-        automática. Para forzar la carga: \cmd{sudo modprobe wireguard}.
+\begin{itemize}
+  \item \textbf{Todos los Services son \cmd{ClusterIP}}: no hay NodePort ni
+        LoadBalancer en la aplicación.
+  \item \textbf{El único punto de entrada es el Ingress NGINX} publicado en
+        \cmd{localhost:80} (sólo se mapean 80/443 del nodo al host).
+  \item \textbf{No existen NetworkPolicies de fábrica}: cualquier pod alcanza a
+        cualquier pod.
+  \item \textbf{Persistencia \cmd{in-memory}} en los 5 servicios: no hay
+        Redis/Postgres/RabbitMQ desplegados sobre la red.
 \end{itemize}
 
-\noindent Verificación rápida del entorno:
-\begin{lstlisting}[style=cmd]
-docker --version && kind --version && kubectl version --client
-# modulo wireguard (opcional; si falta, se usa userspace)
-grep -q '^wireguard ' /proc/modules && echo "kernel: wireguard cargado" || echo "se usara userspace"
-\end{lstlisting}
+\noindent\textbf{Consecuencia central:} fuera del Ingress en \cmd{localhost:80},
+el cluster \textbf{no es alcanzable desde fuera del nodo de ninguna forma
+segura}. No hay canal para operarlo remotamente ni para que una red externa
+consuma sus servicios.
 
-% =====================================================================
-\section{Estructura del repositorio}
-% =====================================================================
-\begin{lstlisting}[style=out]
-.
-|-- the-store-main/          # App de microservicios (baseline, sin modificar)
-|-- vpn/                     # Implementacion propia
-|   |-- docker/Dockerfile    #   imagen WireGuard (kernel + fallback userspace + kubectl)
-|   |-- gateway/             #   gateway WireGuard del cluster (manifests k8s)
-|   |-- client-to-site/      #   doc del escenario Client-To-Site
-|   |-- site-to-site/        #   doc del escenario Site-To-Site
-|   |-- network-policies/    #   default-deny + reglas por servicio
-|   |-- scripts/             #   despliegue, demo, rotacion, verificacion
-|   `-- keys/                #   claves generadas (NO versionadas, .gitignore)
-`-- docs/                    # problematica acotada, este how-to, enunciado
-\end{lstlisting}
+\section{Problema}
+Acotamos el trabajo a \textbf{dos problemas de acceso remoto} y \textbf{uno de
+segmentación} que los habilita de forma segura.
 
-% =====================================================================
-\section{Decisiones técnicas}
-% =====================================================================
-\begin{description}[style=unboxed,leftmargin=0pt]
-  \item[WireGuard de kernel (modo primario).] El pod/container sólo necesita la
-  capability \cmd{NET_ADMIN} y el módulo \cmd{wireguard} cargado en el host. No
-  requiere \cmd{privileged} ni \cmd{/dev/net/tun}.
-  \item[Fallback userspace.] La imagen incluye \cmd{wireguard-go} compilado desde
-  fuente; \cmd{wg-quick} cae a userspace si no hay módulo de kernel.
-  \item[\texttt{ip\_forward} vía initContainer.] En un pod, \cmd{/proc/sys/net}
-  es read-only con sólo \cmd{NET_ADMIN}; un initContainer privilegiado mínimo
-  habilita el forwarding en el \emph{net namespace} del pod.
-  \item[NAT por destino.] El gateway hace \cmd{MASQUERADE} de todo lo que reenvía
-  hacia \cmd{10.96.0.0/16} y \cmd{10.244.0.0/16}: el cluster ve un único origen
-  (la IP del pod) y sabe responder, sin importar el origen real (admin, túnel o
-  la LAN corporativa del Site-To-Site).
-  \item[Exposición por NodePort UDP.] Los clientes (containers en la red docker
-  \cmd{kind}) alcanzan \cmd{<nodeIP>:31820/31821}.
-  \item[NetworkPolicies con kindnet.] El CNI por defecto de Kind (versión usada)
-  \emph{sí} aplica NetworkPolicies; no hizo falta instalar Calico.
+\subsection*{Problema A — No hay acceso administrativo remoto seguro}
+Un administrador o desarrollador \textbf{fuera de la red del nodo} no puede operar
+el cluster (\cmd{kubectl} contra el API server, ni alcanzar servicios internos)
+sin exponer el API server o los servicios en texto plano.
+\;$\rightarrow$\; \textbf{Resuelto con WireGuard Client-To-Site.}
+
+\subsection*{Problema B — Una red externa no puede consumir los servicios}
+Una \textbf{red corporativa completa} necesita consumir los servicios del cluster
+\textbf{sin instalar un cliente VPN en cada equipo} y sin abrir el cluster a la
+red. \;$\rightarrow$\; \textbf{Resuelto con WireGuard Site-To-Site} (túnel
+permanente entre el gateway corporativo y el del cluster; los equipos finales
+sólo necesitan una ruta estática).
+
+\subsection*{Problema C — Sin segmentación, el acceso remoto es acceso total}
+Una vez que el túnel deja entrar tráfico a la red del cluster, \textbf{cualquier
+origen alcanzaría cualquier pod} (movimiento lateral). \;$\rightarrow$\;
+\textbf{Resuelto con NetworkPolicies} (default-deny + reglas mínimas por
+servicio). Es la pieza de defensa en profundidad que hace que el túnel habilite
+\emph{sólo} lo necesario.
+
+\subsection*{Qué provee cada tecnología (sin sobre-prometer)}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\linewidth}{@{}>{\bfseries}p{2.8cm} X@{}}
+\toprule
+Tecnología & Qué aporta exactamente \\
+\midrule
+WireGuard & Canal de red \textbf{cifrado (ChaCha20-Poly1305) y autenticado por
+clave pública} entre peers, para los tramos \emph{cliente$\leftrightarrow$gateway}
+y \emph{red corporativa$\leftrightarrow$gateway}. \cmd{AllowedIPs} define qué
+subredes cruzan el túnel (mínimo privilegio de ruteo). \\
+NetworkPolicies & Segmentación \textbf{a nivel de red del cluster}: default-deny y
+reglas explícitas de qué servicio habla con qué servicio. Bloquea movimiento
+lateral. \\
+\bottomrule
+\end{tabularx}
+
+\section{POC y casos de uso}
+\textbf{Incluye (demostrable, todo en una PC con Kind):} gateway VPN del lado del
+cluster; Client-To-Site (admin $\rightarrow$ \cmd{kubectl} + servicios);
+Site-To-Site (red corporativa $\rightarrow$ servicios sin cliente VPN en el
+equipo final); NetworkPolicies (default-deny + reglas mínimas); validación de
+tráfico cifrado y rotación de claves.
+
+\begin{description}[leftmargin=1.4cm,style=nextline]
+  \item[CU-1] \textbf{Admin opera el cluster remotamente (Client-To-Site):}
+        levanta su túnel, hace \cmd{kubectl} contra el API server y alcanza
+        servicios internos; sólo llega a las subredes de sus \cmd{AllowedIPs}.
+  \item[CU-2] \textbf{Empleado consume servicios sin cliente VPN (Site-To-Site):}
+        desde la red corporativa, el tráfico hacia un servicio cruza el túnel de
+        forma transparente. El equipo final \textbf{no tiene WireGuard}.
+  \item[CU-3] \textbf{Segmentación efectiva (NetworkPolicies):} un origen que
+        entró por el túnel \textbf{no} puede hablar con un servicio no permitido
+        (p.\,ej. alcanzar Orders salteándose a UI).
+  \item[CU-4] \textbf{Rotación de claves ante compromiso:} se rota el par de un
+        peer; las claves anteriores quedan invalidadas y el túnel se restablece.
 \end{description}
 
 % =====================================================================
-\section{Despliegue paso a paso}
+\newpage
+\phantomsection
+\part*{Parte II — How-To: despliegue y pruebas}
+\addcontentsline{toc}{part}{Parte II — How-To: despliegue y pruebas}
 % =====================================================================
-Todos los comandos se ejecutan desde la raíz del repositorio.
 
-\subsection{Paso 0 --- Cluster Kind + aplicación}
-\begin{lstlisting}[style=cmd]
-cd the-store-main
-./local.sh create-cluster --skip-tests
-cd ..
-# Verificar que los 5 microservicios estan Running
-kubectl get pods -n the-store
-\end{lstlisting}
-\begin{lstlisting}[style=out]
-NAME                        READY   STATUS    RESTARTS   AGE
-carts-...                   1/1     Running   0          ...
-catalog-...                 1/1     Running   0          ...
-checkout-...                1/1     Running   0          ...
-orders-...                  1/1     Running   0          ...
-ui-...                      1/1     Running   0          ...
-\end{lstlisting}
+\section{Qué se demuestra}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\linewidth}{@{}>{\bfseries}p{3.2cm} X@{}}
+\toprule
+Escenario & Qué prueba \\
+\midrule
+Client-To-Site & Un admin remoto levanta un túnel y opera el cluster con
+\cmd{kubectl} (API server \cmd{10.96.0.1}) y accede a servicios internos. Todo
+cifrado. \\
+Site-To-Site & Una red corporativa llega a los servicios \textbf{sin WireGuard en
+el equipo final} (sólo ruta estática). \\
+NetworkPolicies & default-deny + reglas mínimas: el túnel sólo alcanza lo
+permitido; el movimiento lateral queda bloqueado. \\
+Cifrado & En el cable sólo se ve UDP cifrado (ChaCha20-Poly1305); el HTTP viaja
+en claro únicamente dentro del túnel. \\
+Rotación de claves & Se rota un par en caliente; la clave anterior queda
+invalidada. \\
+\bottomrule
+\end{tabularx}
 
-\subsection{Atajo --- todo de una}
-El orquestador hace los pasos 1 a 5 y la verificación final:
-\begin{lstlisting}[style=cmd]
+\section{Prerequisitos}
+\begin{itemize}
+  \item \textbf{Docker}, \textbf{Kind} y \textbf{kubectl} instalados (ver
+        \cmd{the-store-main/README.md}).
+  \item Módulo \cmd{wireguard} del kernel (modo primario). Si no está disponible,
+        la imagen cae a \textbf{userspace (\cmd{wireguard-go})} automáticamente.
+        El módulo se carga en el kernel \textbf{del host} (los pods comparten ese
+        kernel; no tienen kernel propio). Para forzar la carga:
+        \cmd{sudo modprobe wireguard}.
+\end{itemize}
+
+\section{Arranque rápido (TL;DR)}
+\begin{lstlisting}
+# 1. App de microservicios (cluster Kind + the-store)
+cd the-store-main && ./local.sh create-cluster --skip-tests && cd ..
+
+# 2. Toda la solucion de acceso remoto, en orden, con verificacion
 vpn/scripts/up.sh
-# ... debe terminar con:  RESULTADO: 8 PASS, 0 FAIL
 \end{lstlisting}
-Las subsecciones siguientes detallan cada paso por separado.
 
-\subsection{Paso 1 --- Generar claves}
-\begin{lstlisting}[style=cmd]
+\noindent\cmd{up.sh} corre, en orden: \cmd{00-gen-keys} $\rightarrow$
+\cmd{10-deploy-gateway} $\rightarrow$ \cmd{20-up-admin-client} $\rightarrow$
+\cmd{25-up-external-pc} $\rightarrow$ \cmd{30-up-site-to-site} $\rightarrow$
+\cmd{40-apply-netpol} $\rightarrow$ \cmd{90-verify}. Al final debe imprimir
+\textbf{\textcolor{verdeok}{RESULTADO: 10 PASS, 0 FAIL}} (con todos los escenarios
+levantados).
+
+\section{Paso a paso}
+
+\subsection{Generar claves}
+\begin{lstlisting}
 vpn/scripts/00-gen-keys.sh
-ls -l vpn/keys/      # 4 pares: gw-c2s, gw-s2s, admin, corp (NO se versionan)
 \end{lstlisting}
-Cada clave privada nunca sale de su lado; sólo se intercambian las públicas.
+Crea 4 pares en \cmd{vpn/keys/} (gitignored): \cmd{gw-c2s}, \cmd{gw-s2s},
+\cmd{admin}, \cmd{corp}. Cada privada nunca sale de su lado; sólo las públicas se
+intercambian.
 
-\subsection{Paso 2 --- Desplegar el gateway WireGuard}
-\begin{lstlisting}[style=cmd]
+\subsection{Desplegar el gateway WireGuard}
+\begin{lstlisting}
 vpn/scripts/10-deploy-gateway.sh
-\end{lstlisting}
-Crea el namespace \cmd{vpn-system}, el Secret con \cmd{wg0.conf}/\cmd{wg1.conf},
-y el Deployment + Service NodePort. Salida esperada (fragmento):
-\begin{lstlisting}[style=out]
-deployment "wg-gateway" successfully rolled out
-Gateway desplegado.
-  Endpoint del nodo Kind : 172.21.0.2
-  Site-To-Site (wg0)     : 172.21.0.2:31820/udp   pubkey: p2wCpykQ...200Y=
-  Client-To-Site (wg1)   : 172.21.0.2:31821/udp   pubkey: 6N6EPvdO...DAc=
-\end{lstlisting}
-Comprobar las interfaces dentro del pod:
-\begin{lstlisting}[style=cmd]
+kubectl get pod -n vpn-system
 kubectl exec -n vpn-system deploy/wg-gateway -c wg-gateway -- wg show
 \end{lstlisting}
-\begin{lstlisting}[style=out]
-interface: wg0
-  public key: p2wCpykQ...   listening port: 51820
-peer: adMTSWYV...           allowed ips: 10.100.0.1/32, 172.30.0.0/24
-interface: wg1
-  public key: 6N6EPvdO...   listening port: 51821
-peer: NxPzqp/P...           allowed ips: 10.200.0.2/32
-\end{lstlisting}
+Crea el namespace \cmd{vpn-system}, el Secret con \cmd{wg0.conf}/\cmd{wg1.conf} y
+el Deployment + Service \textbf{NodePort UDP} (31820 Site-To-Site, 31821
+Client-To-Site). El pod levanta \cmd{wg0} y \cmd{wg1}, habilita \cmd{ip\_forward}
+(initContainer) y NATea hacia los CIDRs del cluster.
 
-\subsection{Paso 3 --- Cliente admin (Client-To-Site)}
-\begin{lstlisting}[style=cmd]
+\subsection{Cliente admin (Client-To-Site)}
+\begin{lstlisting}
 vpn/scripts/20-up-admin-client.sh
+docker exec admin wg show
+docker exec admin kubectl --kubeconfig /root/admin.kubeconfig get pods -n the-store
 \end{lstlisting}
-Levanta el container \cmd{admin} (en la red \cmd{kind}), establece el túnel y
-prepara un kubeconfig que apunta al API server \cmd{10.96.0.1} \emph{por el
-túnel}.
+El \cmd{kubectl} sale al API server \textbf{\cmd{10.96.0.1} por el túnel} (la ruta
+a \cmd{10.96.0.0/16} sólo existe sobre \cmd{wg0}).
 
-\subsection{Paso 4 --- Red corporativa (Site-To-Site)}
-\begin{lstlisting}[style=cmd]
+\subsection{Red corporativa (Site-To-Site)}
+\begin{lstlisting}
 vpn/scripts/30-up-site-to-site.sh
+docker exec corp-pc wg show          # vacio: NO tiene WireGuard
+CAT=$(kubectl get svc catalog -n the-store -o jsonpath='{.spec.clusterIP}')
+docker exec corp-pc curl -s -o /dev/null -w '%{http_code}\n' http://$CAT/health   # 200
 \end{lstlisting}
-Crea \cmd{corp-net} (172.30.0.0/24), el \cmd{corp-gateway} con WireGuard y el
-\cmd{corp-pc} \textbf{sin} WireGuard (sólo ruta estática hacia el cluster).
 
-\subsection{Paso 5 --- NetworkPolicies (segmentación)}
-\begin{lstlisting}[style=cmd]
+\subsection{Segmentación (NetworkPolicies)}
+\begin{lstlisting}
 vpn/scripts/40-apply-netpol.sh
 kubectl get networkpolicy -n the-store
 \end{lstlisting}
-\begin{lstlisting}[style=out]
-NAME                   POD-SELECTOR
-allow-carts            app.kubernetes.io/name=carts
-allow-catalog          app.kubernetes.io/name=catalog
-allow-checkout         app.kubernetes.io/name=checkout
-allow-orders           app.kubernetes.io/name=orders
-allow-ui               app.kubernetes.io/name=ui
-default-deny-ingress   <none>
+
+\subsection{Verificación end-to-end}
+\begin{lstlisting}
+vpn/scripts/90-verify.sh     # imprime PASS/FAIL por chequeo
 \end{lstlisting}
 
-% =====================================================================
-\section{Pruebas de conexión}
-% =====================================================================
-
-\subsection{Client-To-Site: túnel, handshake y \texttt{kubectl}}
-\begin{lstlisting}[style=cmd]
-# 1) Handshake y estado del tunel del admin
-docker exec admin wg show
-
-# 2) Ping al gateway por el tunel
-docker exec admin ping -c 3 10.200.0.1
-
-# 3) kubectl al API server 10.96.0.1 POR EL TUNEL
-docker exec admin kubectl --kubeconfig /root/admin.kubeconfig get nodes
-docker exec admin kubectl --kubeconfig /root/admin.kubeconfig get pods -n the-store
-
-# 4) La ruta a 10.96.0.1 sale exclusivamente por wg0 (no por la red docker)
-docker exec admin ip route get 10.96.0.1
+\subsection{Rotación de claves (ante compromiso de un peer)}
+\begin{lstlisting}
+vpn/scripts/rotate-keys.sh admin    # o: rotate-keys.sh corp
 \end{lstlisting}
-\begin{lstlisting}[style=out]
-peer: 6N6EPvdO...   endpoint: 172.21.0.2:31821
-  latest handshake: 3 seconds ago
-  transfer: 476 B received, 564 B sent
-
-3 packets transmitted, 3 packets received, 0% packet loss
-
-NAME                      STATUS   ROLES           VERSION
-the-store-control-plane   Ready    control-plane   v1.35.0
-
-10.96.0.1 dev wg0 src 10.200.0.2 uid 0
+Rota el par de claves del peer indicado \textbf{sin reiniciar el gateway}:
+\begin{enumerate}
+  \item Genera un par nuevo para el peer (\cmd{wg genkey} / \cmd{wg pubkey}).
+  \item Actualiza el peer en el gateway \textbf{en caliente} con \cmd{wg set}:
+        quita la clave pública vieja y agrega la nueva (la anterior queda
+        \textbf{invalidada de inmediato}).
+  \item Persiste el cambio en el Secret del gateway (sobrevive a un reinicio
+        del pod).
+  \item Reconfigura el cliente (\cmd{admin} o \cmd{corp-gateway}) con la clave
+        nueva y reconecta el túnel.
+\end{enumerate}
+Al final el script verifica que la clave vieja \textbf{ya no figura} en el
+gateway y que la nueva está activa (CU-4). Para comprobarlo a mano:
+\begin{lstlisting}
+kubectl exec -n vpn-system deploy/wg-gateway -c wg-gateway -- wg show wg0
+docker exec admin wg show            # handshake reciente con la clave nueva
 \end{lstlisting}
 
-\subsection{Client-To-Site: acceso a servicios internos}
-\begin{lstlisting}[style=cmd]
-CAT=$(kubectl get svc catalog -n the-store -o jsonpath='{.spec.clusterIP}')
-UI=$(kubectl get svc ui -n the-store -o jsonpath='{.spec.clusterIP}')
-docker exec admin curl -s -o /dev/null -w 'catalog %{http_code}\n' http://$CAT/health
-docker exec admin curl -s -o /dev/null -w 'ui      %{http_code}\n' http://$UI/
-\end{lstlisting}
-\begin{lstlisting}[style=out]
-catalog 200
-ui      200
-\end{lstlisting}
+\section{Cómo funciona por dentro}
+\begin{itemize}
+  \item \textbf{Gateway = pod} en \cmd{vpn-system}, modo \textbf{kernel} (sólo
+        \cmd{NET\_ADMIN}); un initContainer privilegiado habilita
+        \cmd{ip\_forward} (en un pod \cmd{/proc/sys/net} es read-only). Fallback
+        userspace (\cmd{wireguard-go}) si no hay módulo.
+  \item \textbf{Exposición = NodePort UDP}: los clientes (containers en la red
+        \cmd{kind}) alcanzan \cmd{<nodeIP>:31820/31821}.
+  \item \textbf{AllowedIPs} = mínimo privilegio de ruteo y ACL de origen: definen
+        qué subredes cruzan el túnel por cada peer.
+  \item \textbf{NAT por destino} en el gateway: todo lo que se reenvía a
+        \cmd{10.96.0.0/16} / \cmd{10.244.0.0/16} sale con la IP del pod, así el
+        cluster sabe responder (vale para admin, túnel y la LAN corporativa).
+  \item \textbf{NetworkPolicies} las aplica el CNI de Kind (kindnet): default-deny
+        ingress + una regla por servicio.
+\end{itemize}
+\noindent Todos los valores de red están en \cmd{vpn/scripts/lib.sh}.
 
-\subsection{Site-To-Site: el equipo final NO tiene WireGuard}
-\begin{lstlisting}[style=cmd]
-# corp-pc no tiene tunel propio (wg show vacio)
-docker exec corp-pc wg show
+\subsection*{Mapa de rangos de red}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\linewidth}{@{}>{\ttfamily}p{3.2cm} X@{}}
+\toprule
+\normalfont\textbf{CIDR} & \textbf{Rol} \\
+\midrule
+10.200.0.0/24 & Subred del túnel Client-To-Site (IPs virtuales de WireGuard;
+gateway \cmd{.1}, admin \cmd{.2}). \\
+10.100.0.0/30 & Subred del túnel Site-To-Site (gateway corp $\leftrightarrow$
+gateway cluster). \\
+10.96.0.0/16  & Service CIDR del cluster (ClusterIPs; API server \cmd{10.96.0.1}). \\
+10.244.0.0/16 & Pod CIDR del cluster (IPs reales de los pods). \\
+172.21.0.0/16 & Red Docker \cmd{kind} (nodo y contenedores admin/corp/external). \\
+172.30.0.0/24 & LAN corporativa simulada (\cmd{corp-pc}). \\
+\bottomrule
+\end{tabularx}
 
-# corp-pc llega a catalog SOLO por la ruta estatica -> corp-gateway -> tunel
-CAT=$(kubectl get svc catalog -n the-store -o jsonpath='{.spec.clusterIP}')
-docker exec corp-pc curl -s -o /dev/null -w 'corp-pc->catalog %{http_code}\n' http://$CAT/health
-
-# El handshake real ocurre en el corp-gateway
-docker exec corp-gateway wg show
-\end{lstlisting}
-\begin{lstlisting}[style=out]
-(corp-pc wg show: vacio -- no hay WireGuard en el equipo)
-
-corp-pc->catalog 200
-
-interface: wg0
-  public key: adMTSWYV...
-peer: p2wCpykQ...   endpoint: 172.21.0.2:31820
-  latest handshake: 53 seconds ago
-  transfer: 124 B received, 1.33 KiB sent
-\end{lstlisting}
-
-% =====================================================================
-\section{Demostraciones para la presentación}
-% =====================================================================
-
-\subsection{Segmentación (NetworkPolicies, CU-3)}
-La VPN llega a Catalog pero \textbf{no} a Orders; el movimiento lateral entre
-servicios está bloqueado.
-\begin{lstlisting}[style=cmd]
-CAT=$(kubectl get svc catalog -n the-store -o jsonpath='{.spec.clusterIP}')
-ORD=$(kubectl get svc orders  -n the-store -o jsonpath='{.spec.clusterIP}')
-UI_POD=$(kubectl get pod -n the-store -l app.kubernetes.io/name=ui -o jsonpath='{.items[0].metadata.name}')
-CAT_POD=$(kubectl get pod -n the-store -l app.kubernetes.io/name=catalog -o jsonpath='{.items[0].metadata.name}')
-
-# Permitido por la VPN
-docker exec admin curl -s -o /dev/null -w 'admin->catalog %{http_code}\n' --max-time 4 http://$CAT/health
-# Bloqueado para la VPN (Orders solo acepta UI y Checkout)
-docker exec admin curl -s -o /dev/null -w 'admin->orders  %{http_code}\n' --max-time 4 http://$ORD/actuator/health || echo 'admin->orders BLOQUEADO'
-# Llamada legitima de la app: UI->Orders permitida
-kubectl exec -n the-store $UI_POD -- curl -s -o /dev/null -w 'ui->orders %{http_code}\n' --max-time 4 http://$ORD/actuator/health
-# Movimiento lateral bloqueado: Catalog->Orders
-kubectl exec -n the-store $CAT_POD -- curl -s -o /dev/null -w 'catalog->orders %{http_code}\n' --max-time 4 http://$ORD/actuator/health || echo 'catalog->orders BLOQUEADO'
-\end{lstlisting}
-\begin{lstlisting}[style=out]
-admin->catalog 200
-admin->orders  000   (timeout -> BLOQUEADO)
-ui->orders     200
-catalog->orders 000  (timeout -> BLOQUEADO)
-\end{lstlisting}
-
-\subsection{Cifrado en el cable}
-\begin{lstlisting}[style=cmd]
-vpn/scripts/verify-encryption.sh
-\end{lstlisting}
-\begin{lstlisting}[style=out]
-===== EN EL CABLE (eth0): lo que veria un sniffer en la red =====
-IP 172.21.0.3.53929 > 172.21.0.2.31821: UDP, length 96
-IP 172.21.0.2.31821 > 172.21.0.3.53929: UDP, length 96
------ Hay texto plano (GET /health, HTTP/1.1, Host:) en el cable? -----
-  NADA: el payload esta cifrado (ChaCha20-Poly1305).
-===== DENTRO DEL TUNEL (wg0): el mismo request descifrado =====
-IP 10.200.0.2.56014 > 10.96.51.185.80: ... HTTP: GET /health HTTP/1.1
-GET /health HTTP/1.1
-Host: 10.96.51.185
-\end{lstlisting}
-
-\subsection{Rotación de claves (en caliente)}
-\begin{lstlisting}[style=cmd]
-vpn/scripts/rotate-keys.sh admin       # o: corp
-\end{lstlisting}
-\begin{lstlisting}[style=out]
-Rotando 'admin' (interfaz wg1 del gateway).
-  clave publica ANTERIOR: NxPzqp/P...
-  clave publica NUEVA:    zToqEz/D...
-Actualizando el peer en el gateway (en caliente)...
-Reconfigurando el cliente 'admin' y reconectando...
-  La clave vieja ya NO figura en el gateway (invalidada).
-  La clave nueva esta activa en el gateway.
-Rotacion de 'admin' completada.
-\end{lstlisting}
-
-% =====================================================================
-\section{Verificación automática}
-% =====================================================================
-\begin{lstlisting}[style=cmd]
-vpn/scripts/90-verify.sh
-\end{lstlisting}
-\begin{lstlisting}[style=out]
-== App funcional ==
-  PASS  Ingress -> UI responde 200
-  PASS  UI -> Orders (llamada legitima) permitida
-== Client-To-Site (admin remoto) ==
-  PASS  Tunel admin (wg0) levantado
-  PASS  kubectl por el tunel (API server 10.96.0.1) funciona
-  PASS  admin -> Catalog permitido (200)
-== Segmentacion por NetworkPolicies ==
-  PASS  admin(VPN) -> Orders BLOQUEADO (sin acceso directo)
-  PASS  Movimiento lateral Catalog -> Orders BLOQUEADO
-== Site-To-Site (red corporativa) ==
-  PASS  corp-pc (SIN WireGuard) -> Catalog por el tunel (200)
-
-RESULTADO: 8 PASS, 0 FAIL
-\end{lstlisting}
-
-% =====================================================================
-\section{Troubleshooting}
-% =====================================================================
-\begin{longtable}{@{}p{6cm}p{9cm}@{}}
-\textbf{Síntoma} & \textbf{Causa / solución} \\
-\hline
-Tras \texttt{10-deploy}, los clientes tardan en reconectar &
-El \texttt{rollout restart} recrea el pod; los túneles re-handshakean en
-$\sim$25\,s (PersistentKeepalive). Reintentar la prueba. \\[3pt]
-\texttt{corp-pc} no llega al cluster &
-Verificar \texttt{ip\_forward=1} en \texttt{corp-gateway} (se setea con
-\texttt{-{}-sysctl}) y la ruta estática en \texttt{corp-pc}. \\[3pt]
-\texttt{172.20.0.0/24} ocupado &
-La red corporativa usa \texttt{172.30.0.0/24} (configurable en
-\texttt{lib.sh}). \\[3pt]
-El gateway no levanta \texttt{wg} &
-Módulo de kernel ausente: la imagen usa userspace. Revisar
-\texttt{kubectl logs -n vpn-system deploy/wg-gateway}. \\[3pt]
-Las NetworkPolicies no bloquean &
-El CNI debe soportarlas (kindnet reciente sí; si no, instalar Calico). \\
-\end{longtable}
-
-% =====================================================================
 \section{Teardown}
-% =====================================================================
-\begin{lstlisting}[style=cmd]
+\begin{lstlisting}
 vpn/scripts/99-teardown.sh          # quita VPN/netpols, deja la app intacta
-vpn/scripts/99-teardown.sh --all    # ademas borra las claves generadas
-\end{lstlisting}
-
-\appendix
-\newpage
-% =====================================================================
-\section{Imagen y variables}
-% =====================================================================
-\subsection{\texttt{vpn/docker/Dockerfile}}
-\begin{lstlisting}[style=file,language=bash]
-# Imagen única compartida por el gateway del cluster y por los containers
-# admin / corp (red corporativa). WireGuard en USERSPACE (wireguard-go) para no
-# depender del módulo de kernel: sólo necesita /dev/net/tun + NET_ADMIN.
-#
-# wireguard-go no está empaquetado en Alpine, así que lo compilamos desde fuente
-# (binario Go pequeño y autocontenido) y lo copiamos a la imagen final.
-
-# ---- build stage: compilar wireguard-go ----
-FROM golang:1.22-alpine AS build
-ARG WIREGUARD_GO_VERSION=0.0.20230223
-RUN apk add --no-cache git make bash
-RUN git clone --depth 1 --branch "${WIREGUARD_GO_VERSION}" \
-        https://git.zx2c4.com/wireguard-go /src \
-    && cd /src \
-    && make \
-    && cp wireguard-go /usr/local/bin/wireguard-go
-
-# ---- runtime stage ----
-FROM alpine:3.20
-RUN apk add --no-cache \
-        wireguard-tools \
-        iptables \
-        ip6tables \
-        iproute2 \
-        bash \
-        tcpdump \
-        curl \
-        bind-tools
-COPY --from=build /usr/local/bin/wireguard-go /usr/bin/wireguard-go
-
-# kubectl para el cliente admin (Client-To-Site: operar el cluster por el túnel).
-ARG KUBECTL_VERSION=v1.31.0
-RUN arch="$(uname -m)"; case "$arch" in \
-        x86_64) k=amd64;; aarch64) k=arm64;; *) k=amd64;; esac; \
-    curl -fsSL -o /usr/bin/kubectl \
-        "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${k}/kubectl" \
-    && chmod +x /usr/bin/kubectl
-
-# wg-quick usa la implementación userspace en vez del módulo de kernel.
-ENV WG_QUICK_USERSPACE_IMPLEMENTATION=wireguard-go
-ENV LOG_LEVEL=info
-
-CMD ["/bin/bash"]
-\end{lstlisting}
-\subsection{\texttt{vpn/scripts/lib.sh}}
-\begin{lstlisting}[style=file,language=bash]
-#!/usr/bin/env bash
-# Librería compartida: variables de red y helpers para toda la solución.
-# Se hace `source` desde los demás scripts. No ejecutar directamente.
-
-set -euo pipefail
-
-# --- Rutas ---
-VPN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-REPO_DIR="$(cd "$VPN_DIR/.." && pwd)"
-KEYS_DIR="$VPN_DIR/keys"
-
-# --- Imagen / cluster ---
-IMAGE="tpe-wireguard:latest"
-CLUSTER="the-store"          # nombre del cluster Kind
-APP_NS="the-store"           # namespace de la app
-VPN_NS="vpn-system"          # namespace del gateway WireGuard
-
-# --- Túnel Client-To-Site (interfaz wg1 en el gateway) ---
-C2S_IF="wg1"
-C2S_SUBNET="10.200.0.0/24"
-C2S_GW_IP="10.200.0.1"       # gateway (servidor)
-C2S_ADMIN_IP="10.200.0.2"    # cliente admin
-C2S_LISTEN="51821"           # puerto WG dentro del pod
-C2S_NODEPORT="31821"         # NodePort UDP expuesto en el nodo
-
-# --- Túnel Site-To-Site (interfaz wg0 en el gateway) ---
-S2S_IF="wg0"
-S2S_SUBNET="10.100.0.0/30"
-S2S_GW_IP="10.100.0.2"       # gateway del cluster (Peer B)
-S2S_CORP_IP="10.100.0.1"     # gateway corporativo (Peer A)
-S2S_LISTEN="51820"
-S2S_NODEPORT="31820"
-
-# --- Red corporativa simulada ---
-# Nota: el TPE proponía 172.20.0.0/24, pero en la máquina de desarrollo ese /16
-# ya estaba tomado por otra red docker. Usamos 172.30.0.0/24 (mismo rol).
-CORP_NET="corp-net"          # red docker
-CORP_SUBNET="172.30.0.0/24"
-CORP_GW_IP="172.30.0.1"      # corp-gateway (con WireGuard)
-CORP_PC_IP="172.30.0.50"     # corp-pc (SIN WireGuard)
-CORP_BRIDGE_GW="172.30.0.254" # gateway del bridge docker (libera .1 para corp-gateway)
-
-# --- CIDRs del cluster (defaults de Kind) ---
-SVC_CIDR="10.96.0.0/16"
-POD_CIDR="10.244.0.0/16"
-APISERVER_IP="10.96.0.1"     # ClusterIP del API server
-
-# --- Colores ---
-c_info()  { printf '\033[0;34m%s\033[0m\n' "$*"; }
-c_ok()    { printf '\033[0;32m%s\033[0m\n' "$*"; }
-c_warn()  { printf '\033[1;33m%s\033[0m\n' "$*"; }
-c_err()   { printf '\033[0;31m%s\033[0m\n' "$*" >&2; }
-
-# --- Helpers ---
-
-# Asegura que la imagen WireGuard exista (la construye si falta).
-ensure_image() {
-  if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
-    c_info "Construyendo imagen $IMAGE ..."
-    docker build -t "$IMAGE" "$VPN_DIR/docker/"
-  fi
-}
-
-# Asegura que el módulo wireguard del kernel esté cargado (modo kernel).
-# Si no se puede cargar, los componentes usan el fallback userspace
-# (wireguard-go, ya incluido en la imagen).
-ensure_wg_module() {
-  # Usamos /proc/modules (no depende de tener /sbin en el PATH como lsmod).
-  if grep -q '^wireguard ' /proc/modules 2>/dev/null; then
-    c_ok "Módulo wireguard ya cargado (modo kernel)."
-    return 0
-  fi
-  c_warn "Módulo wireguard no cargado; intentando cargarlo..."
-  if sudo modprobe wireguard 2>/dev/null && grep -q '^wireguard ' /proc/modules; then
-    c_ok "Módulo wireguard cargado."
-    return 0
-  fi
-  # Fallback: forzar autocarga vía container privilegiado efímero.
-  docker run --rm --privileged "$IMAGE" \
-    sh -c 'ip link add wgprobe type wireguard 2>/dev/null && ip link del wgprobe' >/dev/null 2>&1 || true
-  if grep -q '^wireguard ' /proc/modules 2>/dev/null; then
-    c_ok "Módulo wireguard cargado (vía container privilegiado)."
-    return 0
-  fi
-  c_warn "No se pudo cargar el módulo; los pods/containers usarán userspace (wireguard-go)."
-  return 0
-}
-
-# IP del nodo Kind en la red docker 'kind' (endpoint de los NodePorts).
-node_ip() {
-  docker inspect -f '{{range $k,$v := .NetworkSettings.Networks}}{{if eq $k "kind"}}{{$v.IPAddress}}{{end}}{{end}}' \
-    "${CLUSTER}-control-plane"
-}
-
-# Lee una clave generada por 00-gen-keys.sh.
-key_priv() { cat "$KEYS_DIR/$1.key"; }
-key_pub()  { cat "$KEYS_DIR/$1.pub"; }
-
-require_keys() {
-  if [ ! -d "$KEYS_DIR" ] || [ -z "$(ls -A "$KEYS_DIR" 2>/dev/null)" ]; then
-    c_err "No hay claves en $KEYS_DIR. Corré primero: vpn/scripts/00-gen-keys.sh"
-    exit 1
-  fi
-}
-
-# Renderiza wg0.conf (Site-To-Site) y wg1.conf (Client-To-Site) del gateway en
-# el directorio $1, a partir de las claves actuales. Fuente única usada por el
-# deploy y por la rotación de claves.
-render_gateway_confs() {
-  local out="$1"
-  cat > "$out/wg0.conf" <<EOF
-[Interface]
-Address = ${S2S_GW_IP}/30
-ListenPort = ${S2S_LISTEN}
-PrivateKey = $(key_priv gw-s2s)
-
-[Peer]
-PublicKey = $(key_pub corp)
-AllowedIPs = ${S2S_CORP_IP}/32, ${CORP_SUBNET}
-EOF
-  cat > "$out/wg1.conf" <<EOF
-[Interface]
-Address = ${C2S_GW_IP}/24
-ListenPort = ${C2S_LISTEN}
-PrivateKey = $(key_priv gw-c2s)
-
-[Peer]
-PublicKey = $(key_pub admin)
-AllowedIPs = ${C2S_ADMIN_IP}/32
-EOF
-}
-
-# (Re)crea el Secret wg-gateway-conf desde las claves actuales (idempotente).
-update_gateway_secret() {
-  local tmp; tmp="$(mktemp -d)"
-  render_gateway_confs "$tmp"
-  kubectl create secret generic wg-gateway-conf -n "$VPN_NS" \
-    --from-file=wg0.conf="$tmp/wg0.conf" \
-    --from-file=wg1.conf="$tmp/wg1.conf" \
-    --dry-run=client -o yaml | kubectl apply -f - >/dev/null
-  rm -rf "$tmp"
-}
-
-# Pod del gateway (nombre) para exec/live config.
-gateway_pod() {
-  kubectl get pod -n "$VPN_NS" -l app=wg-gateway -o jsonpath='{.items[0].metadata.name}'
-}
+vpn/scripts/99-teardown.sh --all    # ademas borra las claves
 \end{lstlisting}
 
 % =====================================================================
-\section{Gateway WireGuard}
-% =====================================================================
-\subsection{\texttt{vpn/gateway/namespace.yaml}}
-\begin{lstlisting}[style=file]
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: vpn-system
-  labels:
-    app.kubernetes.io/part-of: tpe-acceso-remoto
-    purpose: wireguard-gateway
-\end{lstlisting}
-\subsection{\texttt{vpn/gateway/gateway.yaml}}
-\begin{lstlisting}[style=file]
-# Gateway WireGuard del cluster.
-# Dependencias creadas por vpn/scripts/10-deploy-gateway.sh ANTES de aplicar esto:
-#   - Secret  wg-gateway-conf        (wg0.conf, wg1.conf — contienen claves privadas)
-#   - ConfigMap wg-gateway-entrypoint (entrypoint.sh)
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: wg-gateway
-  namespace: vpn-system
-  labels:
-    app: wg-gateway
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: wg-gateway
-  template:
-    metadata:
-      labels:
-        app: wg-gateway
-    spec:
-      initContainers:
-        # /proc/sys/net es read-only con sólo NET_ADMIN. Este init (privilegiado,
-        # efímero) habilita ip_forward en el netns del pod; el container principal
-        # queda con sólo NET_ADMIN.
-        - name: enable-forwarding
-          image: tpe-wireguard:latest
-          imagePullPolicy: IfNotPresent
-          command: ["sh", "-c", "echo 1 > /proc/sys/net/ipv4/ip_forward"]
-          securityContext:
-            privileged: true
-      containers:
-        - name: wg-gateway
-          image: tpe-wireguard:latest
-          imagePullPolicy: IfNotPresent
-          command: ["/bin/bash", "/opt/gateway/entrypoint.sh"]
-          env:
-            # Mismos valores que vpn/scripts/lib.sh (fuente única de verdad).
-            - { name: C2S_SUBNET, value: "10.200.0.0/24" }
-            - { name: S2S_SUBNET, value: "10.100.0.0/30" }
-            - { name: SVC_CIDR,   value: "10.96.0.0/16" }
-            - { name: POD_CIDR,   value: "10.244.0.0/16" }
-          securityContext:
-            # Modo kernel: alcanza con NET_ADMIN (no requiere privileged).
-            capabilities:
-              add: ["NET_ADMIN"]
-          ports:
-            - { name: s2s, containerPort: 51820, protocol: UDP }
-            - { name: c2s, containerPort: 51821, protocol: UDP }
-          volumeMounts:
-            - { name: wg-conf,    mountPath: /etc/wireguard, readOnly: true }
-            - { name: entrypoint, mountPath: /opt/gateway }
-          readinessProbe:
-            exec:
-              command: ["wg", "show", "wg0"]
-            initialDelaySeconds: 3
-            periodSeconds: 5
-      volumes:
-        - name: wg-conf
-          secret:
-            secretName: wg-gateway-conf
-        - name: entrypoint
-          configMap:
-            name: wg-gateway-entrypoint
-            defaultMode: 0755
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: wg-gateway
-  namespace: vpn-system
-  labels:
-    app: wg-gateway
-spec:
-  type: NodePort
-  selector:
-    app: wg-gateway
-  ports:
-    - { name: s2s, port: 51820, targetPort: 51820, nodePort: 31820, protocol: UDP }
-    - { name: c2s, port: 51821, targetPort: 51821, nodePort: 31821, protocol: UDP }
-\end{lstlisting}
-\subsection{\texttt{vpn/gateway/entrypoint.sh}}
-\begin{lstlisting}[style=file,language=bash]
-#!/usr/bin/env bash
-# Entrypoint del pod gateway WireGuard del cluster.
-# - Levanta wg0 (Site-To-Site) y wg1 (Client-To-Site) desde /etc/wireguard.
-# - Habilita IP forwarding y NAT (MASQUERADE) de las subredes túnel hacia los
-#   CIDRs del cluster, para que el tráfico de los peers alcance services y pods.
-set -euo pipefail
-
-: "${C2S_SUBNET:?}"; : "${S2S_SUBNET:?}"; : "${SVC_CIDR:?}"; : "${POD_CIDR:?}"
-
-# ip_forward lo habilita el initContainer 'enable-forwarding' (en un pod
-# /proc/sys/net es read-only con sólo NET_ADMIN). Acá sólo verificamos.
-if [ "$(cat /proc/sys/net/ipv4/ip_forward)" != "1" ]; then
-  echo "[gateway] ADVERTENCIA: ip_forward != 1 (¿corrió el initContainer?)"
-fi
-
-echo "[gateway] levantando interfaces WireGuard"
-wg-quick up wg0    # Site-To-Site
-wg-quick up wg1    # Client-To-Site
-
-# MASQUERADE por DESTINO: todo lo que el gateway reenvía hacia los CIDRs del
-# cluster sale con la IP del pod gateway. Así el cluster ve un único origen
-# conocido y sabe rutear la respuesta de vuelta, sin importar el origen real
-# (admin 10.200.x, túnel 10.100.x, o la LAN corporativa 172.30.x del Site-To-Site).
-echo "[gateway] NAT (MASQUERADE) hacia los CIDRs del cluster (services/pods)"
-iptables -t nat -A POSTROUTING -d "$SVC_CIDR" -j MASQUERADE
-iptables -t nat -A POSTROUTING -d "$POD_CIDR" -j MASQUERADE
-for ifc in wg0 wg1; do
-  iptables -A FORWARD -i "$ifc" -j ACCEPT
-  iptables -A FORWARD -o "$ifc" -j ACCEPT
-done
-
-echo "[gateway] estado de WireGuard:"
-wg show
-
-echo "[gateway] túneles arriba. Esperando handshakes de los peers."
-# Mantiene el pod vivo; reacciona a SIGTERM bajando las interfaces.
-trap 'echo "[gateway] bajando"; wg-quick down wg1 || true; wg-quick down wg0 || true; exit 0' TERM INT
-sleep infinity &
-wait
-\end{lstlisting}
-
-% =====================================================================
-\section{NetworkPolicies}
-% =====================================================================
-\subsection{\texttt{00-default-deny-ingress.yaml}}
-\begin{lstlisting}[style=file]
-# Default-deny de ingress para todo el namespace the-store.
-# A partir de acá, ningún pod recibe tráfico salvo lo que una política explícita
-# habilite. (Egress queda abierto: DNS y dependencias siguen funcionando.)
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: default-deny-ingress
-  namespace: the-store
-spec:
-  podSelector: {}
-  policyTypes: [Ingress]
-\end{lstlisting}
-\subsection{\texttt{10-ui.yaml}}
-\begin{lstlisting}[style=file]
-# UI: frontend. Recibe del Ingress NGINX y del túnel WireGuard (vpn-system).
-# El tráfico de ambos túneles llega NATeado al pod del gateway (vpn-system),
-# por eso se habilita por namespaceSelector vpn-system.
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-ui
-  namespace: the-store
-spec:
-  podSelector:
-    matchLabels:
-      app.kubernetes.io/name: ui
-  policyTypes: [Ingress]
-  ingress:
-    - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: ingress-nginx
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: vpn-system
-      ports:
-        - { protocol: TCP, port: 8080 }
-\end{lstlisting}
-\subsection{\texttt{20-catalog.yaml}}
-\begin{lstlisting}[style=file]
-# Catalog: sólo acepta de UI y del túnel Site-To-Site (vpn-system).
-# (Es el único servicio de negocio que se expone a la red corporativa.)
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-catalog
-  namespace: the-store
-spec:
-  podSelector:
-    matchLabels:
-      app.kubernetes.io/name: catalog
-  policyTypes: [Ingress]
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: ui
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: vpn-system
-      ports:
-        - { protocol: TCP, port: 8080 }
-\end{lstlisting}
-\subsection{\texttt{30-carts.yaml}}
-\begin{lstlisting}[style=file]
-# Carts: sólo acepta de UI y Checkout. NO desde el túnel (sin acceso directo).
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-carts
-  namespace: the-store
-spec:
-  podSelector:
-    matchLabels:
-      app.kubernetes.io/name: carts
-  policyTypes: [Ingress]
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: ui
-        - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: checkout
-      ports:
-        - { protocol: TCP, port: 8080 }
-\end{lstlisting}
-\subsection{\texttt{40-orders.yaml}}
-\begin{lstlisting}[style=file]
-# Orders: sólo acepta de UI y Checkout. NO desde el túnel (sin acceso directo).
-# Este es el caso de uso de segmentación (CU-3): un admin/empleado por la VPN
-# NO puede alcanzar Orders directamente, aunque sí UI/Catalog.
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-orders
-  namespace: the-store
-spec:
-  podSelector:
-    matchLabels:
-      app.kubernetes.io/name: orders
-  policyTypes: [Ingress]
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: ui
-        - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: checkout
-      ports:
-        - { protocol: TCP, port: 8080 }
-\end{lstlisting}
-\subsection{\texttt{50-checkout.yaml}}
-\begin{lstlisting}[style=file]
-# Checkout: sólo acepta de UI (orquesta el pago llamando a Carts y Orders).
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-checkout
-  namespace: the-store
-spec:
-  podSelector:
-    matchLabels:
-      app.kubernetes.io/name: checkout
-  policyTypes: [Ingress]
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: ui
-      ports:
-        - { protocol: TCP, port: 8080 }
-\end{lstlisting}
-
-% =====================================================================
-\section{Scripts}
-% =====================================================================
-\subsection{\texttt{00-gen-keys.sh}}
-\begin{lstlisting}[style=file,language=bash]
-#!/usr/bin/env bash
-# Genera todos los pares de claves WireGuard del POC.
-# Cada par: <nombre>.key (privada) y <nombre>.pub (pública) en vpn/keys/.
-# vpn/keys/ está en .gitignore: las claves NUNCA se commitean.
-#
-# Peers:
-#   gw-c2s   gateway, interfaz Client-To-Site (wg1)
-#   gw-s2s   gateway, interfaz Site-To-Site   (wg0)
-#   admin    cliente admin remoto (Client-To-Site)
-#   corp     gateway de la red corporativa    (Site-To-Site)
-
-set -euo pipefail
-cd "$(dirname "${BASH_SOURCE[0]}")"
-source ./lib.sh
-
-ensure_image
-mkdir -p "$KEYS_DIR"
-chmod 700 "$KEYS_DIR"
-
-PEERS="gw-c2s gw-s2s admin corp"
-
-gen_one() {
-  local name="$1"
-  if [ -f "$KEYS_DIR/$name.key" ] && [ "${FORCE:-0}" != "1" ]; then
-    c_warn "  $name ya existe (usá FORCE=1 para regenerar) — se conserva."
-    return
-  fi
-  local priv pub
-  priv="$(docker run --rm "$IMAGE" wg genkey)"
-  pub="$(printf '%s' "$priv" | docker run --rm -i "$IMAGE" wg pubkey)"
-  printf '%s' "$priv" > "$KEYS_DIR/$name.key"
-  printf '%s' "$pub"  > "$KEYS_DIR/$name.pub"
-  chmod 600 "$KEYS_DIR/$name.key"
-  c_ok "  $name  ->  pub: $pub"
-}
-
-c_info "Generando claves en $KEYS_DIR ..."
-for p in $PEERS; do gen_one "$p"; done
-c_ok "Listo. $(ls "$KEYS_DIR" | wc -l) archivos de clave."
-\end{lstlisting}
-\subsection{\texttt{10-deploy-gateway.sh}}
-\begin{lstlisting}[style=file,language=bash]
-#!/usr/bin/env bash
-# Despliega el gateway WireGuard en el cluster (namespace vpn-system).
-# Renderiza wg0.conf (Site-To-Site) y wg1.conf (Client-To-Site) desde las claves,
-# los publica como Secret, carga la imagen en Kind y aplica los manifiestos.
-set -euo pipefail
-cd "$(dirname "${BASH_SOURCE[0]}")"
-source ./lib.sh
-
-ensure_image
-ensure_wg_module
-require_keys
-
-c_info "Cargando imagen $IMAGE en el cluster Kind '$CLUSTER'..."
-kind load docker-image "$IMAGE" --name "$CLUSTER"
-
-c_info "Creando namespace, Secret y ConfigMap..."
-kubectl apply -f "$VPN_DIR/gateway/namespace.yaml"
-
-update_gateway_secret   # render wg0.conf + wg1.conf desde las claves -> Secret
-
-kubectl create configmap wg-gateway-entrypoint -n "$VPN_NS" \
-  --from-file=entrypoint.sh="$VPN_DIR/gateway/entrypoint.sh" \
-  --dry-run=client -o yaml | kubectl apply -f -
-
-c_info "Aplicando Deployment + Service (NodePort)..."
-kubectl apply -f "$VPN_DIR/gateway/gateway.yaml"
-
-# Forzar recarga si el Secret/ConfigMap cambió.
-kubectl rollout restart deployment/wg-gateway -n "$VPN_NS" >/dev/null 2>&1 || true
-c_info "Esperando que el gateway esté listo..."
-kubectl rollout status deployment/wg-gateway -n "$VPN_NS" --timeout=120s
-
-NODE_IP="$(node_ip)"
-c_ok "Gateway desplegado."
-echo
-echo "  Endpoint del nodo Kind : ${NODE_IP}"
-echo "  Site-To-Site (wg0)     : ${NODE_IP}:${S2S_NODEPORT}/udp   pubkey: $(key_pub gw-s2s)"
-echo "  Client-To-Site (wg1)   : ${NODE_IP}:${C2S_NODEPORT}/udp   pubkey: $(key_pub gw-c2s)"
-echo
-echo "  Logs:  kubectl logs -n ${VPN_NS} deploy/wg-gateway"
-\end{lstlisting}
-\subsection{\texttt{20-up-admin-client.sh}}
-\begin{lstlisting}[style=file,language=bash]
-#!/usr/bin/env bash
-# Escenario Client-To-Site: levanta el "laptop admin" como container WireGuard,
-# establece el túnel contra wg1 del gateway y prepara kubectl apuntando al API
-# server POR EL TÚNEL (https://10.96.0.1). Deja el container vivo para la demo.
-set -euo pipefail
-cd "$(dirname "${BASH_SOURCE[0]}")"
-source ./lib.sh
-
-ensure_image
-require_keys
-
-NODE_IP="$(node_ip)"
-[ -n "$NODE_IP" ] || { c_err "No encuentro la IP del nodo Kind. ¿Está el cluster '$CLUSTER' levantado?"; exit 1; }
-
-ADMIN_PRIV="$(key_priv admin)"
-GW_PUB="$(key_pub gw-c2s)"
-
-c_info "Recreando container 'admin' en la red kind..."
-docker rm -f admin >/dev/null 2>&1 || true
-docker run -d --name admin --network kind \
-  --cap-add NET_ADMIN \
-  "$IMAGE" sleep infinity >/dev/null
-
-c_info "Escribiendo configuración WireGuard del admin (wg0)..."
-docker exec admin sh -c "mkdir -p /etc/wireguard && cat > /etc/wireguard/wg0.conf <<EOF
-[Interface]
-Address = ${C2S_ADMIN_IP}/24
-PrivateKey = ${ADMIN_PRIV}
-
-[Peer]
-PublicKey = ${GW_PUB}
-Endpoint = ${NODE_IP}:${C2S_NODEPORT}
-# Mínimo privilegio: sólo estas subredes del cluster cruzan el túnel.
-AllowedIPs = ${C2S_SUBNET}, ${SVC_CIDR}, ${POD_CIDR}
-PersistentKeepalive = 25
-EOF"
-
-c_info "Levantando túnel..."
-docker exec admin wg-quick up wg0
-
-c_info "Preparando kubeconfig (server -> https://${APISERVER_IP}:443 por el túnel)..."
-TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
-kind get kubeconfig --name "$CLUSTER" > "$TMP/admin.kubeconfig"
-sed -i -E "s#server: https://127\\.0\\.0\\.1:[0-9]+#server: https://${APISERVER_IP}:443#" "$TMP/admin.kubeconfig"
-docker cp "$TMP/admin.kubeconfig" admin:/root/admin.kubeconfig >/dev/null
-
-c_ok "Cliente admin conectado."
-echo
-echo "  Túnel:   ${C2S_ADMIN_IP}  <->  ${C2S_GW_IP} (gateway wg1)"
-echo "  Probar:  docker exec admin wg show"
-echo "           docker exec admin kubectl --kubeconfig /root/admin.kubeconfig get nodes"
-echo "           docker exec admin ping -c2 ${C2S_GW_IP}"
-\end{lstlisting}
-\subsection{\texttt{30-up-site-to-site.sh}}
-\begin{lstlisting}[style=file,language=bash]
-#!/usr/bin/env bash
-# Escenario Site-To-Site: "red corporativa" que consume servicios del cluster
-# SIN instalar WireGuard en el equipo final.
-#
-#   corp-pc (172.20.0.50, SIN WG)  --ruta estática-->  corp-gateway (172.20.0.1, WG)
-#        --túnel wg0--> gateway del cluster --> services/pods
-#
-# El corp-gateway está además en la red 'kind' para alcanzar el NodePort UDP.
-set -euo pipefail
-cd "$(dirname "${BASH_SOURCE[0]}")"
-source ./lib.sh
-
-ensure_image
-require_keys
-
-NODE_IP="$(node_ip)"
-[ -n "$NODE_IP" ] || { c_err "No encuentro la IP del nodo Kind. ¿Está el cluster '$CLUSTER'?"; exit 1; }
-
-CORP_PRIV="$(key_priv corp)"
-GW_PUB="$(key_pub gw-s2s)"
-
-c_info "Creando red corporativa '$CORP_NET' ($CORP_SUBNET)..."
-# Teardown de corridas previas (los containers deben irse antes que la red).
-docker rm -f corp-gateway corp-pc >/dev/null 2>&1 || true
-# El gateway del bridge docker se mueve a .254 para liberar .1 para corp-gateway.
-docker network rm "$CORP_NET" >/dev/null 2>&1 || true
-docker network create --subnet "$CORP_SUBNET" --gateway "$CORP_BRIDGE_GW" "$CORP_NET" >/dev/null
-
-# --- corp-gateway: con WireGuard, en corp-net y en kind ---
-c_info "Levantando corp-gateway ($CORP_GW_IP) con WireGuard..."
-docker rm -f corp-gateway >/dev/null 2>&1 || true
-docker run -d --name corp-gateway --network "$CORP_NET" --ip "$CORP_GW_IP" \
-  --cap-add NET_ADMIN --sysctl net.ipv4.ip_forward=1 \
-  "$IMAGE" sleep infinity >/dev/null
-docker network connect kind corp-gateway      # 2da interfaz para llegar al NodePort
-
-docker exec corp-gateway sh -c "mkdir -p /etc/wireguard && cat > /etc/wireguard/wg0.conf <<EOF
-[Interface]
-Address = ${S2S_CORP_IP}/30
-PrivateKey = ${CORP_PRIV}
-
-[Peer]
-PublicKey = ${GW_PUB}
-Endpoint = ${NODE_IP}:${S2S_NODEPORT}
-# Sólo el tráfico al cluster cruza el túnel (el resto sigue su ruta normal).
-AllowedIPs = ${S2S_SUBNET}, ${SVC_CIDR}, ${POD_CIDR}
-PersistentKeepalive = 25
-EOF"
-docker exec corp-gateway wg-quick up wg0
-# ip_forward ya viene de --sysctl; aseguramos el FORWARD entre corp-net y wg0.
-docker exec corp-gateway iptables -A FORWARD -j ACCEPT
-
-# --- corp-pc: SIN WireGuard, sólo ruta estática hacia el cluster ---
-c_info "Levantando corp-pc ($CORP_PC_IP) SIN WireGuard..."
-docker rm -f corp-pc >/dev/null 2>&1 || true
-docker run -d --name corp-pc --network "$CORP_NET" --ip "$CORP_PC_IP" \
-  --cap-add NET_ADMIN "$IMAGE" sleep infinity >/dev/null
-# En producción estas rutas las empuja el router corporativo / DHCP.
-docker exec corp-pc sh -c "ip route add ${SVC_CIDR} via ${CORP_GW_IP} && ip route add ${POD_CIDR} via ${CORP_GW_IP}"
-
-c_ok "Red corporativa lista."
-echo
-echo "  corp-pc ${CORP_PC_IP} (SIN WireGuard)  ->  corp-gateway ${CORP_GW_IP}  ->  túnel wg0  ->  cluster"
-echo "  Probar:  docker exec corp-pc wg show            # vacío: corp-pc NO tiene WireGuard"
-echo "           docker exec corp-gateway wg show       # túnel del gateway corporativo"
-CAT_IP=$(kubectl get svc catalog -n "$APP_NS" -o jsonpath='{.spec.clusterIP}' 2>/dev/null || echo '<catalog-ip>')
-echo "           docker exec corp-pc curl -s -o /dev/null -w '%{http_code}\\n' http://${CAT_IP}/health"
-\end{lstlisting}
-\subsection{\texttt{40-apply-netpol.sh}}
-\begin{lstlisting}[style=file,language=bash]
-#!/usr/bin/env bash
-# Aplica las NetworkPolicies de segmentación al namespace the-store:
-# default-deny de ingress + una regla mínima por servicio.
-set -euo pipefail
-cd "$(dirname "${BASH_SOURCE[0]}")"
-source ./lib.sh
-
-c_info "Aplicando NetworkPolicies en el namespace $APP_NS ..."
-kubectl apply -f "$VPN_DIR/network-policies/"
-
-echo
-kubectl get networkpolicy -n "$APP_NS"
-echo
-c_ok "Políticas aplicadas. Verificar con: vpn/scripts/90-verify.sh"
-\end{lstlisting}
-\subsection{\texttt{90-verify.sh}}
-\begin{lstlisting}[style=file,language=bash]
-#!/usr/bin/env bash
-# Verificación end-to-end de la solución. Imprime PASS/FAIL por cada chequeo.
-# Cubre: app funcional, Client-To-Site, segmentación por NetworkPolicies y
-# (si está levantado) Site-To-Site.
-set -uo pipefail
-cd "$(dirname "${BASH_SOURCE[0]}")"
-source ./lib.sh
-
-PASS=0; FAIL=0
-ok()   { c_ok   "  PASS  $1"; PASS=$((PASS+1)); }
-bad()  { c_err  "  FAIL  $1"; FAIL=$((FAIL+1)); }
-
-# code <url> desde un container docker
-dcode() { docker exec "$1" curl -s -o /dev/null -w "%{http_code}" --max-time 4 "$2" 2>/dev/null || echo 000; }
-# code <url> desde un pod del cluster
-kcode() { kubectl exec -n "$APP_NS" "$1" -- curl -s -o /dev/null -w "%{http_code}" --max-time 4 "$2" 2>/dev/null || echo 000; }
-
-CAT_IP=$(kubectl get svc catalog -n "$APP_NS" -o jsonpath='{.spec.clusterIP}')
-ORD_IP=$(kubectl get svc orders  -n "$APP_NS" -o jsonpath='{.spec.clusterIP}')
-UI_POD=$(kubectl get pod -n "$APP_NS" -l app.kubernetes.io/name=ui      -o jsonpath='{.items[0].metadata.name}')
-CAT_POD=$(kubectl get pod -n "$APP_NS" -l app.kubernetes.io/name=catalog -o jsonpath='{.items[0].metadata.name}')
-
-c_info "== App funcional =="
-[ "$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 http://localhost/)" = "200" ] \
-  && ok "Ingress -> UI responde 200" || bad "Ingress -> UI"
-[ "$(kcode "$UI_POD" "http://$ORD_IP/actuator/health")" = "200" ] \
-  && ok "UI -> Orders (llamada legítima) permitida" || bad "UI -> Orders"
-
-c_info "== Client-To-Site (admin remoto) =="
-if docker ps --format '{{.Names}}' | grep -q '^admin$'; then
-  docker exec admin wg show wg0 >/dev/null 2>&1 && ok "Túnel admin (wg0) levantado" || bad "Túnel admin"
-  [ "$(docker exec admin kubectl --kubeconfig /root/admin.kubeconfig get nodes --no-headers 2>/dev/null | wc -l)" -ge 1 ] \
-    && ok "kubectl por el túnel (API server 10.96.0.1) funciona" || bad "kubectl por el túnel"
-  [ "$(dcode admin "http://$CAT_IP/health")" = "200" ] \
-    && ok "admin -> Catalog permitido (200)" || bad "admin -> Catalog"
-else
-  c_warn "  (container 'admin' no está levantado; correr 20-up-admin-client.sh)"
-fi
-
-c_info "== Segmentación por NetworkPolicies =="
-if kubectl get netpol default-deny-ingress -n "$APP_NS" >/dev/null 2>&1; then
-  if docker ps --format '{{.Names}}' | grep -q '^admin$'; then
-    [ "$(dcode admin "http://$ORD_IP/actuator/health")" != "200" ] \
-      && ok "admin(VPN) -> Orders BLOQUEADO (sin acceso directo)" || bad "admin -> Orders debería estar bloqueado"
-  fi
-  [ "$(kcode "$CAT_POD" "http://$ORD_IP/actuator/health")" != "200" ] \
-    && ok "Movimiento lateral Catalog -> Orders BLOQUEADO" || bad "lateral Catalog -> Orders"
-else
-  c_warn "  (NetworkPolicies no aplicadas; correr 40-apply-netpol.sh)"
-fi
-
-c_info "== Site-To-Site (red corporativa) =="
-if docker ps --format '{{.Names}}' | grep -q '^corp-pc$'; then
-  [ "$(dcode corp-pc "http://$CAT_IP/health")" = "200" ] \
-    && ok "corp-pc (SIN WireGuard) -> Catalog por el túnel (200)" || bad "corp-pc -> Catalog"
-else
-  c_warn "  (red corporativa no levantada; correr 30-up-site-to-site.sh)"
-fi
-
-echo
-[ "$FAIL" -eq 0 ] && c_ok "RESULTADO: $PASS PASS, $FAIL FAIL" || c_err "RESULTADO: $PASS PASS, $FAIL FAIL"
-exit $([ "$FAIL" -eq 0 ] && echo 0 || echo 1)
-\end{lstlisting}
-\subsection{\texttt{rotate-keys.sh}}
-\begin{lstlisting}[style=file,language=bash]
-#!/usr/bin/env bash
-# Rotación de claves de un peer SIN reiniciar el gateway:
-#   1) genera un par nuevo para el peer,
-#   2) actualiza el peer en el gateway EN CALIENTE (wg set: quita la vieja, agrega
-#      la nueva),
-#   3) reconfigura el cliente con la clave nueva y reconecta,
-#   4) persiste el Secret del gateway.
-# La clave pública anterior queda invalidada de inmediato.
-#
-# Uso: rotate-keys.sh [admin|corp]     (default: admin)
-set -euo pipefail
-cd "$(dirname "${BASH_SOURCE[0]}")"
-source ./lib.sh
-require_keys
-
-PEER="${1:-admin}"
-case "$PEER" in
-  admin) IFACE="$C2S_IF"; CLIENT_CT="admin";        ALLOWED="${C2S_ADMIN_IP}/32";;
-  corp)  IFACE="$S2S_IF"; CLIENT_CT="corp-gateway"; ALLOWED="${S2S_CORP_IP}/32,${CORP_SUBNET}";;
-  *) c_err "Uso: rotate-keys.sh [admin|corp]"; exit 1;;
-esac
-
-GWPOD="$(gateway_pod)"
-[ -n "$GWPOD" ] || { c_err "No encuentro el pod del gateway."; exit 1; }
-docker ps --format '{{.Names}}' | grep -q "^${CLIENT_CT}$" \
-  || { c_err "El cliente '$CLIENT_CT' no está levantado."; exit 1; }
-
-OLD_PUB="$(key_pub "$PEER")"
-c_info "Rotando '$PEER' (interfaz $IFACE del gateway)."
-echo "  clave pública ANTERIOR: $OLD_PUB"
-
-# 1) Par nuevo
-NEW_PRIV="$(docker run --rm "$IMAGE" wg genkey)"
-NEW_PUB="$(printf '%s' "$NEW_PRIV" | docker run --rm -i "$IMAGE" wg pubkey)"
-printf '%s' "$NEW_PRIV" > "$KEYS_DIR/$PEER.key"; chmod 600 "$KEYS_DIR/$PEER.key"
-printf '%s' "$NEW_PUB"  > "$KEYS_DIR/$PEER.pub"
-echo "  clave pública NUEVA:    $NEW_PUB"
-
-# 2) Gateway en caliente: quitar peer viejo, agregar nuevo
-c_info "Actualizando el peer en el gateway (en caliente)..."
-kubectl exec -n "$VPN_NS" "$GWPOD" -c wg-gateway -- wg set "$IFACE" peer "$OLD_PUB" remove
-kubectl exec -n "$VPN_NS" "$GWPOD" -c wg-gateway -- wg set "$IFACE" peer "$NEW_PUB" allowed-ips "$ALLOWED"
-
-# 3) Persistir Secret (para sobrevivir a un reinicio del pod)
-update_gateway_secret
-
-# 4) Reconfigurar el cliente y reconectar
-c_info "Reconfigurando el cliente '$CLIENT_CT' y reconectando..."
-docker exec "$CLIENT_CT" sh -c "sed -i 's#^PrivateKey = .*#PrivateKey = ${NEW_PRIV}#' /etc/wireguard/wg0.conf; wg-quick down wg0 >/dev/null 2>&1; wg-quick up wg0 >/dev/null 2>&1"
-
-sleep 2
-c_info "Verificación:"
-if kubectl exec -n "$VPN_NS" "$GWPOD" -c wg-gateway -- wg show "$IFACE" | grep -q "$OLD_PUB"; then
-  c_err "  La clave vieja TODAVÍA figura en el gateway (rotación incompleta)."
-else
-  c_ok "  La clave vieja ya NO figura en el gateway (invalidada)."
-fi
-kubectl exec -n "$VPN_NS" "$GWPOD" -c wg-gateway -- wg show "$IFACE" | grep -q "$NEW_PUB" \
-  && c_ok "  La clave nueva está activa en el gateway." || c_err "  La clave nueva no aparece."
-c_ok "Rotación de '$PEER' completada."
-\end{lstlisting}
-\subsection{\texttt{verify-encryption.sh}}
-\begin{lstlisting}[style=file,language=bash]
-#!/usr/bin/env bash
-# Verifica que el tráfico viaja CIFRADO por el túnel:
-#   - Captura en eth0 (el cable): UDP opaco hacia el puerto WireGuard, sin texto
-#     plano (no aparece el HTTP ni el nombre del servicio).
-#   - Captura en wg0 (dentro del túnel): el MISMO request en HTTP claro.
-# Demuestra que WireGuard cifra en el cable y que el dato viaja por el túnel.
-#
-# Uso: verify-encryption.sh   (usa el container 'admin' / Client-To-Site)
-set -euo pipefail
-cd "$(dirname "${BASH_SOURCE[0]}")"
-source ./lib.sh
-
-CT="admin"
-docker ps --format '{{.Names}}' | grep -q "^${CT}$" \
-  || { c_err "El container '$CT' no está levantado (correr 20-up-admin-client.sh)."; exit 1; }
-
-CAT_IP="$(kubectl get svc catalog -n "$APP_NS" -o jsonpath='{.spec.clusterIP}')"
-c_info "Generando tráfico (curl a catalog $CAT_IP) y capturando en paralelo..."
-
-docker exec "$CT" sh -c '
-  CAT="'"$CAT_IP"'"; PORT="'"$C2S_NODEPORT"'"
-  tcpdump -i eth0 -n -w /tmp/wire.pcap  "udp port $PORT" >/dev/null 2>&1 & W=$!
-  tcpdump -i wg0  -n -w /tmp/inner.pcap "tcp"            >/dev/null 2>&1 & I=$!
-  sleep 1
-  for i in 1 2 3; do curl -s -o /dev/null "http://$CAT/health"; done
-  sleep 1
-  kill $W $I 2>/dev/null; sleep 1
-
-  echo
-  echo "===== EN EL CABLE (eth0): lo que vería un sniffer en la red ====="
-  tcpdump -nr /tmp/wire.pcap 2>/dev/null | head -4
-  echo
-  echo "----- ¿Hay texto plano (GET /health, HTTP/1.1, Host:) en el cable? -----"
-  PLAIN=$(tcpdump -nAr /tmp/wire.pcap 2>/dev/null | grep -aE "GET /health|HTTP/1\.1|Host:" | head -3)
-  if [ -n "$PLAIN" ]; then
-    echo "$PLAIN"; echo "  (!) apareció texto plano"
-  else
-    echo "  NADA: el payload está cifrado (ChaCha20-Poly1305)."
-  fi
-  echo
-  echo "===== DENTRO DEL TÚNEL (wg0): el mismo request descifrado ====="
-  tcpdump -nAr /tmp/inner.pcap 2>/dev/null | grep -iE "GET /health|HTTP|Host:" | head -3
-'
-c_ok "Listo: en el cable sólo se ve UDP cifrado; dentro de wg0, el HTTP en claro."
-\end{lstlisting}
-\subsection{\texttt{up.sh}}
-\begin{lstlisting}[style=file,language=bash]
-#!/usr/bin/env bash
-# Orquestador: levanta toda la solución de acceso remoto en orden, sobre un
-# cluster the-store ya desplegado. Pensado para la demo.
-set -euo pipefail
-cd "$(dirname "${BASH_SOURCE[0]}")"
-source ./lib.sh
-
-c_info "==> 0/5  Generando claves";                 ./00-gen-keys.sh
-c_info "==> 1/5  Desplegando gateway WireGuard";     ./10-deploy-gateway.sh
-c_info "==> 2/5  Cliente admin (Client-To-Site)";    ./20-up-admin-client.sh
-c_info "==> 3/5  Red corporativa (Site-To-Site)";    ./30-up-site-to-site.sh
-c_info "==> 4/5  NetworkPolicies (segmentación)";    ./40-apply-netpol.sh
-c_info "==> 5/5  Verificación end-to-end";           ./90-verify.sh
-\end{lstlisting}
-\subsection{\texttt{99-teardown.sh}}
-\begin{lstlisting}[style=file,language=bash]
-#!/usr/bin/env bash
-# Desarma la solución de acceso remoto. Por defecto NO toca la app the-store ni
-# el cluster Kind (sólo lo que agrega este TPE).
-#   --all   además borra las claves generadas (vpn/keys/).
-set -euo pipefail
-cd "$(dirname "${BASH_SOURCE[0]}")"
-source ./lib.sh
-
-c_info "Quitando containers y red corporativa..."
-docker rm -f admin corp-gateway corp-pc >/dev/null 2>&1 || true
-docker network rm "$CORP_NET" >/dev/null 2>&1 || true
-
-c_info "Quitando NetworkPolicies de $APP_NS..."
-kubectl delete -f "$VPN_DIR/network-policies/" --ignore-not-found >/dev/null 2>&1 || true
-
-c_info "Quitando el gateway (namespace $VPN_NS)..."
-kubectl delete namespace "$VPN_NS" --ignore-not-found >/dev/null 2>&1 || true
-
-if [ "${1:-}" = "--all" ]; then
-  c_warn "Borrando claves en $KEYS_DIR..."
-  rm -rf "$KEYS_DIR"
-fi
-
-c_ok "Teardown completo. La app the-store y el cluster quedan intactos."
-\end{lstlisting}
 
 \end{document}

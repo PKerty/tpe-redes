@@ -137,7 +137,7 @@
         }
 
         .reveal table td.highlight {
-            background: var(--nb-secondary);
+            background: var(--nb-secondary) !important;
             color: #fff;
             font-weight: 700;
         }
@@ -263,21 +263,21 @@
             background: #fff;
             border: var(--nb-border-width) solid var(--nb-black);
             box-shadow: var(--nb-shadow-offset) var(--nb-shadow-offset) 0 var(--nb-black);
-            padding: 1.2em 1.5em;
+            padding: 0.8em 0.9em;
             border-radius: var(--nb-radius);
             text-align: left;
         }
 
         .nb-problem-card h3 {
-            font-size: 0.85em;
+            font-size: 0.74em;
             margin-bottom: 0.4em;
             border-bottom: 2px solid var(--nb-black);
             padding-bottom: 0.3em;
         }
 
         .nb-problem-card p {
-            font-size: 0.65em;
-            line-height: 1.5;
+            font-size: 0.6em;
+            line-height: 1.45;
             margin: 0;
         }
 
@@ -442,6 +442,235 @@
             .nb-grid-2 { grid-template-columns: 1fr; }
             .nb-why-grid { grid-template-columns: 1fr; }
         }
+
+        /* ===== Tipografía legible: base explícita (sin theme, reveal hereda 16px) ===== */
+        .reveal {
+            font-size: 34px;
+        }
+
+        /* =====================================================
+           DIAGRAMAS DE TOPOLOGÍA (Slides 7.A y 7.B)
+           ===================================================== */
+        .diag {
+            position: relative;
+            width: 920px;
+            height: 580px;
+            margin: 14px auto 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .diag-svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        /* Caja genérica con borde + sombra dura */
+        .dg-box {
+            position: absolute;
+            background: #fff;
+            border: 3px solid #000;
+            box-shadow: 4px 4px 0 #000;
+            text-align: center;
+            z-index: 2;
+        }
+
+        /* Contenedor grande del cluster */
+        .dg-cluster {
+            position: absolute;
+            border: 3px solid #000;
+            background: rgba(255, 255, 255, 0.5);
+            box-shadow: 6px 6px 0 #000;
+            z-index: 1;
+        }
+
+        /* Namespace: recuadro punteado con pestaña */
+        .dg-ns {
+            position: absolute;
+            border: 2px dashed #000;
+            z-index: 1;
+        }
+
+        .dg-tab {
+            position: absolute;
+            top: -14px;
+            left: -3px;
+            background: #000;
+            color: #fff;
+            font-family: 'Space Mono', monospace;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 3px 10px;
+            white-space: nowrap;
+            z-index: 4;
+        }
+
+        .dg-tab-teal { background: var(--nb-secondary); color: #000; border: 2px solid #000; }
+        .dg-tab-coral { background: var(--nb-primary); color: #000; border: 2px solid #000; }
+
+        /* Pod como gráfico */
+        .kpod {
+            position: absolute;
+            width: 110px;
+            background: #fff;
+            border: 3px solid #000;
+            box-shadow: 4px 4px 0 #000;
+            text-align: center;
+            padding: 18px 4px 8px;
+            z-index: 2;
+        }
+
+        .kpod-hex {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            width: 13px;
+            height: 15px;
+            background: #1A1A2E;
+            clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+        }
+
+        .kpod-tag {
+            position: absolute;
+            top: 3px;
+            right: 5px;
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #555;
+        }
+
+        .kpod-name {
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+            font-size: 15px;
+            text-transform: uppercase;
+            line-height: 1.1;
+        }
+
+        .kpod-lang {
+            font-size: 13px;
+            margin-top: 2px;
+        }
+
+        .kpod-chip {
+            display: inline-block;
+            background: #000;
+            color: #fff;
+            font-family: 'Space Mono', monospace;
+            font-size: 12px;
+            padding: 1px 8px;
+            margin-top: 5px;
+        }
+
+        .kpod-chip-teal { background: var(--nb-secondary); color: #000; border: 2px solid #000; padding: 0 6px; }
+        .kpod-chip-lock { background: #fff; color: #000; border: 2px solid #000; padding: 0 6px; }
+
+        .kpod-teal { background: var(--nb-secondary); }
+        .kpod-teal .kpod-tag { color: #003e3a; }
+
+        /* Actores externos */
+        .dg-ext {
+            position: absolute;
+            width: 160px;
+            background: #fff;
+            border: 3px solid #000;
+            box-shadow: 4px 4px 0 #000;
+            text-align: center;
+            padding: 10px 6px;
+            z-index: 2;
+        }
+
+        .dg-ext .dg-ext-name {
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+            font-size: 15px;
+            text-transform: uppercase;
+        }
+
+        .dg-ext .dg-ext-sub {
+            font-size: 13px;
+            margin-top: 2px;
+        }
+
+        /* Notas y stickers */
+        .dg-note {
+            position: absolute;
+            background: #fff;
+            border: 2px solid #000;
+            font-family: 'Space Mono', monospace;
+            font-size: 13px;
+            padding: 4px 10px;
+            text-align: center;
+            z-index: 2;
+        }
+
+        .dg-sticker {
+            position: absolute;
+            border: 3px solid #000;
+            box-shadow: 4px 4px 0 #000;
+            font-family: 'Space Mono', monospace;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            text-align: center;
+            padding: 4px 10px;
+            line-height: 1.3;
+            z-index: 5;
+        }
+
+        .dg-sticker .dg-sticker-sub {
+            display: block;
+            font-weight: 400;
+            font-size: 12px;
+            text-transform: none;
+        }
+
+        .dg-sticker-coral { background: var(--nb-primary); }
+        .dg-sticker-yellow { background: var(--nb-accent); }
+        .dg-sticker-white { background: #fff; font-weight: 400; text-transform: none; }
+
+        .dg-blocked {
+            position: absolute;
+            background: #fff;
+            border: 3px solid #D7263D;
+            box-shadow: 4px 4px 0 #D7263D;
+            color: #D7263D;
+            font-family: 'Space Mono', monospace;
+            font-size: 13px;
+            font-weight: 700;
+            text-align: center;
+            padding: 6px 8px;
+            z-index: 2;
+        }
+
+        .dg-cidr {
+            position: absolute;
+            font-family: 'Space Mono', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            text-align: right;
+            background: var(--nb-accent);
+            border: 2px solid #000;
+            padding: 3px 8px;
+            z-index: 2;
+        }
+
+        /* Capa NetworkPolicies */
+        .dg-netpol {
+            position: absolute;
+            border: 5px solid var(--nb-secondary);
+            outline: 2px solid #000;
+            outline-offset: 2px;
+            z-index: 1;
+        }
     </style>
 </head>
 <body>
@@ -463,45 +692,118 @@
                 </aside>
             </section>
 
-            <!-- ==================== SLIDE 2: THE STORE ==================== -->
-            <section>
+            <!-- ==================== SLIDE 7.A: TOPOLOGIA ACTUAL ==================== -->
+            <section data-screen-label="7A Topologia actual">
                 <div class="nb-section-label">Contexto</div>
-                <h2>La soluci&oacute;n actual &mdash; The Store</h2>
-                <div class="nb-grid nb-grid-5" style="margin-top: 1em;">
-                    <div class="nb-service-card">
-                        <div class="nb-service-name">UI</div>
-                        <div class="nb-service-lang">Java</div>
+                <h2 style="font-size: 1.4em;">Topolog&iacute;a actual <span style="font-size: 0.6em;">(sin acceso remoto)</span></h2>
+                <div class="diag">
+                    <!-- Actores externos -->
+                    <div class="dg-ext" style="left: 0px; top: 55px;">
+                        <div class="dg-ext-name">Usuario</div>
+                        <div class="dg-ext-sub">navegador</div>
+                        <span class="kpod-chip">localhost:80</span>
                     </div>
-                    <div class="nb-service-card">
-                        <div class="nb-service-name">Catalog</div>
-                        <div class="nb-service-lang">Go</div>
+                    <div class="dg-ext" style="left: 0px; top: 250px;">
+                        <div class="dg-ext-name">Laptop Admin</div>
+                        <div class="dg-ext-sub">remota</div>
                     </div>
-                    <div class="nb-service-card">
-                        <div class="nb-service-name">Cart</div>
-                        <div class="nb-service-lang">Java</div>
+                    <div class="dg-ext" style="left: 0px; top: 380px;">
+                        <div class="dg-ext-name">PC Externo</div>
+                        <div class="dg-ext-sub">sin VPN</div>
                     </div>
-                    <div class="nb-service-card">
-                        <div class="nb-service-name">Orders</div>
-                        <div class="nb-service-lang">Java</div>
+                    <div class="dg-blocked" style="left: 0px; top: 490px; width: 180px;">Sin ruta a 10.96.0.0/16 · sin túnel · BLOQUEADO</div>
+
+                    <!-- Cluster -->
+                    <div class="dg-cluster" style="left: 230px; top: 10px; width: 690px; height: 500px;">
+                        <span class="dg-tab">Cluster Kubernetes (Kind) &middot; nodo: the-store-control-plane</span>
                     </div>
-                    <div class="nb-service-card">
-                        <div class="nb-service-name">Checkout</div>
-                        <div class="nb-service-lang">Node.js</div>
+
+                    <!-- ns ingress-nginx -->
+                    <div class="dg-ns" style="left: 255px; top: 70px; width: 180px; height: 175px;">
+                        <span class="dg-tab">ingress-nginx</span>
                     </div>
-                </div>
-                <div class="nb-grid nb-grid-2" style="margin-top: 1.2em; font-size: 0.75em;">
-                    <div class="nb-card nb-card-white">
-                        <strong>ClusterIP</strong> &mdash; Solo accesibles dentro del cluster
+                    <div class="kpod kpod-teal" style="left: 280px; top: 115px; width: 130px;">
+                        <span class="kpod-hex"></span>
+                        <span class="kpod-tag">pod</span>
+                        <div class="kpod-name">Ingress NGINX</div>
+                        <span class="kpod-chip">:80</span>
                     </div>
-                    <div class="nb-card nb-card-white">
-                        <strong>Ingress NGINX</strong> &mdash; Puerto 80, sin TLS
+
+                    <!-- ns the-store -->
+                    <div class="dg-ns" style="left: 460px; top: 70px; width: 440px; height: 385px;">
+                        <span class="dg-tab">the-store</span>
                     </div>
+                    <div class="dg-cidr" style="left: 745px; top: 78px;">pods 10.244.0.0/16<br>svc 10.96.0.0/16</div>
+
+                    <div class="kpod" style="left: 620px; top: 135px;">
+                        <span class="kpod-hex"></span>
+                        <span class="kpod-tag">pod</span>
+                        <div class="kpod-name">UI</div>
+                        <div class="kpod-lang">Java</div>
+                        <span class="kpod-chip">:8080</span>
+                    </div>
+                    <div class="kpod" style="left: 480px; top: 268px;">
+                        <span class="kpod-hex"></span>
+                        <span class="kpod-tag">pod</span>
+                        <div class="kpod-name">Catalog</div>
+                        <div class="kpod-lang">Go</div>
+                        <span class="kpod-chip">:8080</span>
+                    </div>
+                    <div class="kpod" style="left: 615px; top: 268px;">
+                        <span class="kpod-hex"></span>
+                        <span class="kpod-tag">pod</span>
+                        <div class="kpod-name">Cart</div>
+                        <div class="kpod-lang">Java</div>
+                        <span class="kpod-chip">:8080</span>
+                    </div>
+                    <div class="kpod" style="left: 750px; top: 268px;">
+                        <span class="kpod-hex"></span>
+                        <span class="kpod-tag">pod</span>
+                        <div class="kpod-name">Orders</div>
+                        <div class="kpod-lang">Java</div>
+                        <span class="kpod-chip">:8080</span>
+                    </div>
+                    <div class="kpod" style="left: 480px; top: 368px; width: 118px;">
+                        <span class="kpod-hex"></span>
+                        <span class="kpod-tag">pod</span>
+                        <div class="kpod-name">Checkout</div>
+                        <div class="kpod-lang">Node.js</div>
+                        <span class="kpod-chip">:8080</span>
+                    </div>
+
+                    <div class="dg-note" style="left: 280px; top: 468px; width: 600px;">Todos los services son ClusterIP &mdash; sin NetworkPolicies</div>
+
+                    <!-- Flechas -->
+                    <svg class="diag-svg" viewBox="0 0 920 580">
+                        <defs>
+                            <marker id="ma-black" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#000"></path></marker>
+                            <marker id="ma-green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#1E9E4B"></path></marker>
+                        </defs>
+                        <!-- Usuario -> Ingress (OK) -->
+                        <line x1="165" y1="105" x2="272" y2="150" stroke="#1E9E4B" stroke-width="4" marker-end="url(#ma-green)"></line>
+                        <text x="180" y="92" font-family="Space Mono, monospace" font-size="14" font-weight="700" fill="#1E9E4B">HTTP :80 &#x2713;</text>
+                        <!-- Admin / PC externo -> bloqueados -->
+                        <line x1="165" y1="290" x2="226" y2="305" stroke="#D7263D" stroke-width="4" stroke-dasharray="8 6"></line>
+                        <text x="186" y="288" font-size="24" font-weight="700" fill="#D7263D">&#x2715;</text>
+                        <line x1="165" y1="420" x2="226" y2="435" stroke="#D7263D" stroke-width="4" stroke-dasharray="8 6"></line>
+                        <text x="186" y="418" font-size="24" font-weight="700" fill="#D7263D">&#x2715;</text>
+                        <!-- Ingress -> UI -->
+                        <line x1="412" y1="165" x2="616" y2="180" stroke="#000" stroke-width="2.5" marker-end="url(#ma-black)"></line>
+                        <!-- UI -> Catalog / Cart / Orders -->
+                        <line x1="660" y1="228" x2="545" y2="264" stroke="#000" stroke-width="2.5" marker-end="url(#ma-black)"></line>
+                        <line x1="675" y1="228" x2="672" y2="264" stroke="#000" stroke-width="2.5" marker-end="url(#ma-black)"></line>
+                        <line x1="692" y1="228" x2="800" y2="264" stroke="#000" stroke-width="2.5" marker-end="url(#ma-black)"></line>
+                        <!-- Checkout -> Cart / Orders -->
+                        <line x1="560" y1="364" x2="640" y2="362" stroke="#000" stroke-width="2.5" marker-end="url(#ma-black)"></line>
+                        <line x1="602" y1="395" x2="746" y2="350" stroke="#000" stroke-width="2.5" marker-end="url(#ma-black)"></line>
+                    </svg>
                 </div>
                 <aside class="notes">
-                    The Store es una plataforma de e-commerce con 5 microservicios corriendo en un cluster Kubernetes local. Todos los servicios se comunican por ClusterIP — o sea, solo se acceden entre ellos dentro del cluster. El unico punto de entrada es un Ingress NGINX en el puerto 80, sin TLS. Los endpoints operacionales — para hacer testing, inyectar errores, ver metricas — no tienen ningun tipo de autenticacion. Funciona, pero solo si estas en la misma red donde corre el cluster.
+                    The Store es una plataforma de e-commerce con 5 microservicios corriendo en un cluster Kubernetes local, cada uno como un pod. Lo unico alcanzable desde afuera es el Ingress en el puerto 80, sin TLS. Las ClusterIPs, los pods y el API server son inaccesibles desde el exterior: la laptop del admin y cualquier PC externo no tienen ruta ni tunel. Y adentro, sin NetworkPolicies, todos los pods pueden hablar con todos.
                 </aside>
             </section>
 
+            
             <!-- ==================== SLIDE 3: PROBLEMAS ==================== -->
             <section>
                 <div class="nb-section-label">Problema</div>
@@ -601,9 +903,7 @@
                         <div class="nb-why-point fragment">
                             <strong>Sin PKI</strong> &mdash; 4 pares de claves en archivos de texto
                         </div>
-                        <div class="nb-why-point fragment">
-                            <strong>Kernel-space</strong> &mdash; ~4000 l&iacute;neas de c&oacute;digo, rendimiento nativo
-                        </div>
+                        <div class="nb-why-point fragment">.</div>
                     </div>
                     <div class="fragment">
                         <table style="font-size: 0.6em;">
@@ -651,6 +951,137 @@
                 </div>
                 <aside class="notes">
                     Este es el diagrama completo. En el centro, el cluster Kubernetes con los 5 servicios y el gateway WireGuard como pod dedicado. El gateway tiene dos interfaces: wg0 para el tunel site-to-site con la red corporativa, y wg1 para el tunel client-to-site con el admin remoto. Las NetworkPolicies envuelven los servicios como capa de defensa: default-deny con reglas explicitas por servicio. A la izquierda, la red corporativa con un gateway que tiene WireGuard y las PCs de los empleados que no necesitan instalar nada. A la derecha, el admin remoto con su cliente WireGuard. Todo el trafico que cruza los tuneles va cifrado con ChaCha20-Poly1305.
+                </aside>
+            </section>
+
+            <!-- ==================== SLIDE 7.B: ARQUITECTURA CON VPN ==================== -->
+            <section data-screen-label="7B Arquitectura con VPN">
+                <div class="nb-section-label">Soluci&oacute;n</div>
+                <h2 style="font-size: 1.4em;">Arquitectura con VPN</h2>
+                <div class="diag" style="height: 565px;">
+                    <!-- Red corporativa -->
+                    <div class="dg-ns" style="left: 0px; top: 40px; width: 200px; height: 265px; background: rgba(78,205,196,0.12);">
+                        <span class="dg-tab">Red corporativa</span>
+                    </div>
+                    <div class="dg-cidr" style="left: 48px; top: 50px;">172.30.0.0/24</div>
+                    <div class="kpod" style="left: 18px; top: 82px; width: 164px;">
+                        <span class="kpod-hex"></span>
+                        <span class="kpod-tag">host</span>
+                        <div class="kpod-name">Corp-Gateway</div>
+                        <div class="kpod-lang">WireGuard</div>
+                        <span class="kpod-chip">172.30.0.1</span>
+                        <span class="kpod-chip">wg 10.100.0.1</span>
+                    </div>
+                    <div class="kpod" style="left: 18px; top: 212px; width: 164px; padding-top: 8px;">
+                        <div class="kpod-name">Corp-PC</div>
+                        <span class="kpod-chip">172.30.0.50</span>
+                        <span class="kpod-chip kpod-chip-lock" style="color: #D7263D; border-color: #D7263D;">sin WireGuard</span>
+                    </div>
+
+                    <!-- Laptop admin -->
+                    <div class="dg-ext" style="left: 0px; top: 445px; width: 200px;">
+                        <div class="dg-ext-name">Laptop Admin</div>
+                        <div class="dg-ext-sub">WireGuard &middot; 10.200.0.2</div>
+                        <span class="kpod-chip">kubectl &rarr; API 10.96.0.1</span>
+                    </div>
+
+                    <!-- Cluster -->
+                    <div class="dg-cluster" style="left: 300px; top: 10px; width: 620px; height: 555px;">
+                        <span class="dg-tab" style="left: auto; right: -3px;">Cluster Kubernetes (Kind)</span>
+                    </div>
+
+                    <!-- ns vpn-system -->
+                    <div class="dg-ns" style="left: 322px; top: 60px; width: 260px; height: 230px; background: rgba(255,107,107,0.18);">
+                        <span class="dg-tab dg-tab-coral">vpn-system</span>
+                    </div>
+                    <div class="kpod" style="left: 345px; top: 100px; width: 215px;">
+                        <span class="kpod-hex"></span>
+                        <span class="kpod-tag">pod</span>
+                        <div class="kpod-name">Gateway WireGuard</div>
+                        <span class="kpod-chip">wg0 &middot; S2S &middot; 10.100.0.2/30</span>
+                        <span class="kpod-chip">wg1 &middot; C2S &middot; 10.200.0.1/24</span>
+                    </div>
+
+                    <!-- ns ingress-nginx -->
+                    <div class="dg-ns" style="left: 620px; top: 60px; width: 180px; height: 165px;">
+                        <span class="dg-tab">ingress-nginx</span>
+                    </div>
+                    <div class="kpod kpod-teal" style="left: 645px; top: 100px; width: 130px;">
+                        <span class="kpod-hex"></span>
+                        <span class="kpod-tag">pod</span>
+                        <div class="kpod-name">Ingress NGINX</div>
+                        <span class="kpod-chip">:80</span>
+                    </div>
+
+                    <!-- NodePorts UDP -->
+                    <div class="dg-note" style="left: 248px; top: 100px; background: #000; color: #fff;">:31820/udp</div>
+                    <div class="dg-note" style="left: 248px; top: 235px; background: #000; color: #fff;">:31821/udp</div>
+
+                    <!-- the-store + NetworkPolicies -->
+                    <div class="dg-netpol" style="left: 322px; top: 345px; width: 578px; height: 200px; background: rgba(78,205,196,0.10);">
+                        <span class="dg-tab dg-tab-teal" style="top: -16px;">NetworkPolicies &middot; default-deny + reglas por servicio</span>
+                        <span class="dg-tab" style="top: auto; bottom: -14px; left: auto; right: -3px;">the-store</span>
+                    </div>
+                    <div class="kpod" style="left: 676px; top: 390px; width: 100px;">
+                        <span class="kpod-hex"></span>
+                        <div class="kpod-name">UI</div>
+                        <div class="kpod-lang">Java</div>
+                        <span class="kpod-chip kpod-chip-lock">&#x1F512; t&uacute;nel</span>
+                    </div>
+                    <div class="kpod" style="left: 452px; top: 390px; width: 100px;">
+                        <span class="kpod-hex"></span>
+                        <div class="kpod-name">Catalog</div>
+                        <div class="kpod-lang">Go</div>
+                        <span class="kpod-chip kpod-chip-teal">t&uacute;nel &#x2713;</span>
+                    </div>
+                    <div class="kpod" style="left: 340px; top: 390px; width: 100px;">
+                        <span class="kpod-hex"></span>
+                        <div class="kpod-name">Cart</div>
+                        <div class="kpod-lang">Java</div>
+                        <span class="kpod-chip kpod-chip-lock">&#x1F512; t&uacute;nel</span>
+                    </div>
+                    <div class="kpod" style="left: 564px; top: 390px; width: 100px;">
+                        <span class="kpod-hex"></span>
+                        <div class="kpod-name">Orders</div>
+                        <div class="kpod-lang">Java</div>
+                        <span class="kpod-chip kpod-chip-lock">&#x1F512; t&uacute;nel</span>
+                    </div>
+                    <div class="kpod" style="left: 788px; top: 390px; width: 100px;">
+                        <span class="kpod-hex"></span>
+                        <div class="kpod-name">Checkout</div>
+                        <div class="kpod-lang">Node.js</div>
+                        <span class="kpod-chip kpod-chip-lock">&#x1F512; t&uacute;nel</span>
+                    </div>
+
+                    <!-- Stickers de túneles -->
+                    <div class="dg-sticker dg-sticker-coral" style="left: 150px; top: 8px; width: 260px;">Site-To-Site <span class="dg-sticker-sub" style="display: inline;">&middot; ChaCha20-Poly1305</span></div>
+                    <div class="dg-sticker dg-sticker-white" style="left: 160px; top: 152px; width: 160px; font-size: 12px;">AllowedIPs: 10.96.0.0/16, 10.244.0.0/16</div>
+                    <div class="dg-sticker dg-sticker-yellow" style="left: 30px; top: 322px; width: 260px;">Client-To-Site <span class="dg-sticker-sub" style="display: inline;">&middot; ChaCha20-Poly1305</span></div>
+                    <div class="dg-sticker dg-sticker-white" style="left: 80px; top: 372px; width: 160px; font-size: 12px;">AllowedIPs: 10.96.0.0/16, 10.244.0.0/16</div>
+
+                    <!-- Líneas de túnel -->
+                    <svg class="diag-svg" viewBox="0 0 920 565" style="z-index: 1;">
+                        <defs>
+                            <marker id="mb-black" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#000"></path></marker>
+                        </defs>
+                        <!-- ruta estática corp-pc -> corp-gateway -->
+                        <line x1="100" y1="212" x2="100" y2="190" stroke="#000" stroke-width="2.5"></line>
+                        <!-- Ingress NGINX -> UI (tráfico web) -->
+                        <line x1="712" y1="242" x2="724" y2="382" stroke="#000" stroke-width="2.5" marker-end="url(#mb-black)"></line>
+                        <text x="738" y="300" font-family="Space Mono, monospace" font-size="13" font-weight="700" fill="#000">HTTP :80</text>
+                        <!-- Gateway WireGuard -> Catalog (NAT; único permitido por NetworkPolicies) -->
+                        <line x1="470" y1="242" x2="498" y2="382" stroke="#000" stroke-width="2.5" marker-end="url(#mb-black)"></line>
+                        <text x="508" y="300" font-family="Space Mono, monospace" font-size="13" font-weight="700" fill="#000">NAT desde t&#250;neles</text>
+                        <!-- S2S: corp-gateway -> wg0 -->
+                        <polyline points="185,118 300,112 348,135" fill="none" stroke="#000" stroke-width="12"></polyline>
+                        <polyline points="185,118 300,112 348,135" fill="none" stroke="#FF6B6B" stroke-width="7"></polyline>
+                        <!-- C2S: laptop -> wg1 -->
+                        <polyline points="100,443 175,310 290,250 360,200" fill="none" stroke="#000" stroke-width="12"></polyline>
+                        <polyline points="100,443 175,310 290,250 360,200" fill="none" stroke="#FFE66D" stroke-width="7"></polyline>
+                    </svg>
+                </div>
+                <aside class="notes">
+                    Esta es la solucion completa. Dos tuneles cifrados con ChaCha20-Poly1305 terminan en un unico pod gateway dentro del namespace vpn-system: el site-to-site entra por el NodePort 31820 a la interfaz wg0, y el client-to-site por el 31821 a wg1. El gateway rutea con NAT hacia services y pods. El corp-pc accede sin instalar VPN, solo con una ruta estatica hacia su gateway. Los AllowedIPs limitan lo que cruza cada tunel a las redes del cluster. Y adentro, las NetworkPolicies segmentan: del tunel solo se puede llegar a Catalog; Cart, Orders y Checkout lo rechazan.
                 </aside>
             </section>
 
@@ -728,6 +1159,9 @@
             controls: true,
             progress: true,
             center: true,
+            width: 960,
+            height: 700,
+            margin: 0.04,
             transition: 'slide',
             transitionSpeed: 'fast',
             slideNumber: true,
